@@ -1,0 +1,8 @@
+build/
+cs8803_bin/
+.idea/
+out/
+tigers/
+src/*.class
+src/Tiger*
+*.iml
