@@ -1,31 +1,42 @@
 import java.util.*;
 
 public class BasicBlocks {
-    Block startingBlock;
-    Block currentBlock;
-    Map<String, Block> labeledBlocks;
+    private Block startingBlock;
+    private Block currentBlock;
+    private Map<String, Block> labeledBlocks;
+    private Map<String, Set<Block>> labelListeners;
 
     public BasicBlocks() {
         startingBlock = null;
         currentBlock = null;
         labeledBlocks = new HashMap<>();
+        labelListeners = new HashMap<>();
     }
 
     public void startBasicBlock(String label) {
-        if (currentBlock != null && currentBlock.isEmpty()) {
-            labeledBlocks.put(label, currentBlock);
-            return;
+        if (currentBlock == null || !currentBlock.isEmpty()) {
+            Block newBlock = new Block();
+            if (startingBlock == null) startingBlock = newBlock;
+            if (currentBlock != null) currentBlock.addNextBlock(newBlock);
+            currentBlock = newBlock;
         }
 
-        Block newBlock = getLabeledBlock(label);
-        if (startingBlock == null) startingBlock = newBlock;
-        currentBlock.addNextBlock(newBlock);
-        currentBlock = newBlock;
+        labeledBlocks.put(label, currentBlock);
+
+        for (Block listener : labelListeners.getOrDefault(label, new HashSet<>())) {
+            listener.nextBlocks.add(currentBlock);
+        }
     }
 
     public void endBasicBlock(String jumpLabel, boolean isConditional) {
-        Block jumpBlock = getLabeledBlock(jumpLabel);
-        currentBlock.addNextBlock(jumpBlock);
+        if (labeledBlocks.containsKey(jumpLabel)) {
+            Block jumpBlock = labeledBlocks.get(jumpLabel);
+            currentBlock.addNextBlock(jumpBlock);
+        } else {
+            if (labelListeners.get(jumpLabel) == null)
+                labelListeners.put(jumpLabel, new HashSet<>());
+            labelListeners.get(jumpLabel).add(currentBlock);
+        }
 
         Block newBlock = new Block();
         if (isConditional) currentBlock.addNextBlock(newBlock);
@@ -38,14 +49,11 @@ public class BasicBlocks {
         currentBlock.addCommand(command);
     }
 
-    private Block getLabeledBlock(String label) {
-        if (!labeledBlocks.containsKey(label))
-            labeledBlocks.put(label, new Block());
-
-        return labeledBlocks.get(label);
+    public Block getStartingBlock() {
+        return startingBlock;
     }
 
-    private class Block {
+    public class Block {
         private Set<Block> nextBlocks;
         private List<Command> commands;
 
@@ -54,8 +62,16 @@ public class BasicBlocks {
             commands = new ArrayList<>();
         }
 
+        public Set<Block> getNextBlocks() {
+            return nextBlocks;
+        }
+
         public void addNextBlock(Block nextBlock) {
             nextBlocks.add(nextBlock);
+        }
+
+        public List<Command> getCommands() {
+            return commands;
         }
 
         public void addCommand(Command command) {
