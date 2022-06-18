@@ -4,5 +4,5 @@ cs8803_bin/
 out/
 tigers/
 src/*.class
-src/Tiger*
+src/IR*
 *.iml

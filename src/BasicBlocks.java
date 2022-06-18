@@ -44,6 +44,10 @@ public class BasicBlocks {
         currentBlock = newBlock;
     }
 
+    public void endBasicBlock() {
+        currentBlock = new Block();
+    }
+
     public void addCommand(Command command) {
         assert currentBlock != null;
         currentBlock.addCommand(command);

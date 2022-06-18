@@ -1,23 +1,23 @@
-ANTLR := /Users/nargizi/Desktop/Uni/Compilers/ANTLR-4.9.3/antlr-4.9.3-complete.jar
-GRAMMAR := Tiger.g4
+ANTLR := /Users/Andria/Desktop/Uni_Stuff/Compilers/ANTLR-4.9.3/antlr-4.9.3-complete.jar
+GRAMMAR := IR.g4
 MAIN_CLASS_NAME := Main
 JAR_DIR := cs8803_bin
 BUILD_DIR := build
-COMPILER_JAR := tigerc.jar
+COMPILER_JAR := irc.jar
 
 ANTLR_JAVA_FILES := \
-src/TigerBaseListener.java \
-src/TigerBaseVisitor.java \
-src/TigerLexer.java \
-src/TigerListener.java \
-src/TigerParser.java \
-src/TigerVisitor.java
+src/IRBaseListener.java \
+src/IRBaseVisitor.java \
+src/IRLexer.java \
+src/IRListener.java \
+src/IRParser.java \
+src/IRVisitor.java
 
 ANTLR_FILES := \
-src/Tiger.interp \
-src/Tiger.tokens \
-src/TigerLexer.interp \
-src/TigerLexer.tokens \
+src/IR.interp \
+src/IR.tokens \
+src/IRLexer.interp \
+src/IRLexer.tokens \
 $(ANTLR_JAVA_FILES)
 
 ANTLR_LIBS := \
@@ -25,10 +25,7 @@ $(BUILD_DIR)/javax \
 $(BUILD_DIR)/org
 
 SOURCES := \
-src/GraphVizBuilder.java \
-src/ParseTreeToGraphViz.java \
 src/Main.java \
-src/TokensLogger.java
 
 .PHONY :
 all: $(COMPILER_JAR)
