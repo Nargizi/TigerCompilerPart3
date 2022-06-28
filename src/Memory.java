@@ -24,7 +24,6 @@ public class Memory {
         storedVarAddresses.put(argument, new Address(memoryRegister, size));
         storedVars.put(argument.getValue(), argument);
         size += argument.getSize();
-
     }
 
     public Address getAddress(Argument argument){

@@ -6,6 +6,7 @@ WHITESPACE: [ \t\n] -> skip;
 alnum: ID | NUM;
 COMMA: ',';
 
+// TODO: arrays
 program: START_PROGRAM ID static_int_list static_float_list function* END_PROGRAM ID;
 START_PROGRAM: 'start_program';
 END_PROGRAM: 'end_program';
@@ -20,12 +21,15 @@ function: START_FUNC ID body END_FUNC ID;
 START_FUNC: 'start_function';
 END_FUNC: 'end_function';
 
+// TODO: arrays
 body: type_dec int_list float_list operators*;
 
-type_dec: ID ID LP RP;
+type_dec: ID ID LP args_list RP;
 
 LP: '(';
 RP: ')';
+
+args_list: (ID ID (COMMA ID ID)*)?;
 
 int_list: INT_LIST COLON (ID (COMMA ID)*)?;
 float_list: FLOAT_LIST COLON (ID (COMMA ID)*)?;

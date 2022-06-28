@@ -1,4 +1,4 @@
-public class ArrayElementArgument implements Argument{
+public class ArrayElementArgument implements Argument {
     private Argument arr;
     private Argument index;
 

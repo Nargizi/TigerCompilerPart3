@@ -4,6 +4,4 @@ public class Register {
     public Register(String registerName) {
         this.registerName = registerName;
     }
-
-
 }

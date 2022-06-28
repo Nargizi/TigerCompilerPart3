@@ -1,4 +1,6 @@
 
+import org.antlr.v4.runtime.tree.TerminalNode;
+
 import java.util.List;
 public class Tree extends IRBaseListener {
 
@@ -10,22 +12,24 @@ public class Tree extends IRBaseListener {
         currFunction = null;
     }
 
-
     @Override
     public void enterProgram(IRParser.ProgramContext ctx) {
         currClass = new Class(ctx.ID(0).getText());
     }
 
-    //TODO: ADD variables to class memory
+    // TODO: ARRAYS
     @Override
     public void enterStatic_float_list(IRParser.Static_float_listContext ctx) {
-
-        super.enterStatic_float_list(ctx);
+        for (TerminalNode varNode : ctx.ID()) {
+            currClass.addStaticVar(new IntArgument(varNode.getText()));
+        }
     }
 
     @Override
     public void enterStatic_int_list(IRParser.Static_int_listContext ctx) {
-        super.enterStatic_int_list(ctx);
+        for (TerminalNode varNode : ctx.ID()) {
+            currClass.addStaticVar(new FloatArgument(varNode.getText()));
+        }
     }
 
     @Override
@@ -34,15 +38,31 @@ public class Tree extends IRBaseListener {
         currClass.addFunction(currFunction);
     }
 
-    //TODO: ADD variables to function memory
+    // TODO: 4 args should be in registers
+    @Override
+    public void enterArgs_list(IRParser.Args_listContext ctx) {
+        for (int i = 0; i < ctx.ID().size(); i += 2) {
+            boolean isInt = ctx.ID(i).getText().equals("int");
+            String name = ctx.ID(i + 1).getText();
+
+            Argument arg = isInt ? new IntArgument(name) : new FloatArgument(name);
+            currFunction.addLocalVar(arg);
+        }
+    }
+
+    // TODO: arrays
     @Override
     public void enterFloat_list(IRParser.Float_listContext ctx) {
-        super.enterFloat_list(ctx);
+        for (TerminalNode varNode : ctx.ID()) {
+            currFunction.addLocalVar(new IntArgument(varNode.getText()));
+        }
     }
 
     @Override
     public void enterInt_list(IRParser.Int_listContext ctx) {
-        super.enterInt_list(ctx);
+        for (TerminalNode varNode : ctx.ID()) {
+            currFunction.addLocalVar(new FloatArgument(varNode.getText()));
+        }
     }
 
     @Override
