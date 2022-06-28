@@ -33,8 +33,7 @@ public class BasicBlocks {
             Block jumpBlock = labeledBlocks.get(jumpLabel);
             currentBlock.addNextBlock(jumpBlock);
         } else {
-            if (labelListeners.get(jumpLabel) == null)
-                labelListeners.put(jumpLabel, new HashSet<>());
+            labelListeners.computeIfAbsent(jumpLabel, k -> new HashSet<>());
             labelListeners.get(jumpLabel).add(currentBlock);
         }
 
@@ -52,6 +51,8 @@ public class BasicBlocks {
         assert currentBlock != null;
         currentBlock.addCommand(command);
     }
+
+    public Block getCurrentBlock(){ return currentBlock;}
 
     public Block getStartingBlock() {
         return startingBlock;
@@ -84,6 +85,16 @@ public class BasicBlocks {
 
         public boolean isEmpty() {
             return commands.size() == 0;
+        }
+
+        public Map<Argument, Integer> getUsedVars(){
+            Map<Argument, Integer> usedVars = new HashMap<>();
+            for(var c: commands){
+                for(var v: c.getUsed()){
+                    usedVars.merge(v, 1, Integer::sum);
+                }
+            }
+            return usedVars;
         }
     }
 }

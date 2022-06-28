@@ -1,23 +1,48 @@
-import org.antlr.v4.runtime.Token;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 public class Tree extends IRBaseListener {
 
-    private Map<String, BasicBlocks> functionBasicBlock;
-    private BasicBlocks currentBasicBlocks;
+    private Class currClass;
+    private Function currFunction;
 
     public Tree() {
-        functionBasicBlock = new HashMap<>();
-        currentBasicBlocks = null;
+        currClass = null;
+        currFunction = null;
+    }
+
+
+    @Override
+    public void enterProgram(IRParser.ProgramContext ctx) {
+        currClass = new Class(ctx.ID(0).getText());
+    }
+
+    //TODO: ADD variables to class memory
+    @Override
+    public void enterStatic_float_list(IRParser.Static_float_listContext ctx) {
+
+        super.enterStatic_float_list(ctx);
+    }
+
+    @Override
+    public void enterStatic_int_list(IRParser.Static_int_listContext ctx) {
+        super.enterStatic_int_list(ctx);
     }
 
     @Override
     public void enterFunction(IRParser.FunctionContext ctx) {
-        currentBasicBlocks = new BasicBlocks();
-        functionBasicBlock.put(ctx.ID(0).getText(), currentBasicBlocks);
+        currFunction = new Function(ctx.ID(0).getText());
+        currClass.addFunction(currFunction);
+    }
+
+    //TODO: ADD variables to function memory
+    @Override
+    public void enterFloat_list(IRParser.Float_listContext ctx) {
+        super.enterFloat_list(ctx);
+    }
+
+    @Override
+    public void enterInt_list(IRParser.Int_listContext ctx) {
+        super.enterInt_list(ctx);
     }
 
     @Override
@@ -25,8 +50,8 @@ public class Tree extends IRBaseListener {
         String jumpLabel = ctx.ID().getText();
         Command command = new GotoCommand(jumpLabel);
 
-        currentBasicBlocks.addCommand(command);
-        currentBasicBlocks.endBasicBlock(jumpLabel, false);
+        currFunction.addCommand(command);
+        currFunction.endBasicBlock(jumpLabel, false);
     }
 
     @Override
@@ -35,21 +60,22 @@ public class Tree extends IRBaseListener {
         String jumpLabel = ctx.ID().getText();
         String a = ctx.alnum(0).getText();
         String b = ctx.alnum(1).getText();
-        Command command = new ConditionalBranchCommand(commandName, a, b, jumpLabel);
+        Command command = new ConditionalBranchCommand(commandName, currFunction.getArgument(a),
+                currFunction.getArgument(b), jumpLabel);
 
-        currentBasicBlocks.addCommand(command);
-        currentBasicBlocks.endBasicBlock(jumpLabel, true);
+        currFunction.addCommand(command);
+        currFunction.endBasicBlock(jumpLabel, true);
     }
 
     @Override
     public void exitReturn_operators(IRParser.Return_operatorsContext ctx) {
         // TODO: Implement return command, cause don't remember shit atm
         Command command = ctx.alnum() == null ?
-                new ReturnCommand(ctx.alnum().getText()) :
+                new ReturnCommand(currFunction.getArgument(ctx.alnum().getText())) :
                 new ReturnCommand();
 
-        currentBasicBlocks.addCommand(command);
-        currentBasicBlocks.endBasicBlock();
+        currFunction.addCommand(command);
+        currFunction.endBasicBlock();
     }
 
     @Override
@@ -59,24 +85,25 @@ public class Tree extends IRBaseListener {
         String b = ctx.alnum(1).getText();
         String dest = ctx.ID().getText();
 
-        Command command = new BinaryOperatorCommand(operator, a, b, dest);
-        currentBasicBlocks.addCommand(command);
+        Command command = new BinaryOperatorCommand(operator,
+                currFunction.getArgument(a), currFunction.getArgument(b), currFunction.getArgument(dest));
+        currFunction.addCommand(command);
     }
 
     @Override
     public void exitCall(IRParser.CallContext ctx) {
-        List<String> args = ctx.alnum().stream().map(elem -> elem.getText()).toList();
+        List<Argument> args = ctx.alnum().stream().map(elem -> currFunction.getArgument(elem.getText())).toList();
         Command command = new CallCommand(ctx.ID().getText(), args);
 
-        currentBasicBlocks.addCommand(command);
+        currFunction.addCommand(command);
     }
 
     @Override
     public void exitCallr(IRParser.CallrContext ctx) {
-        List<String> args = ctx.alnum().stream().map(elem -> elem.getText()).toList();
-        Command command = new CallRCommand(ctx.ID(0).getText(), ctx.ID(1).getText(), args);
+        List<Argument> args = ctx.alnum().stream().map(elem -> currFunction.getArgument(elem.getText())).toList();
+        Command command = new CallRCommand(currFunction.getArgument(ctx.ID(0).getText()), ctx.ID(1).getText(), args);
 
-        currentBasicBlocks.addCommand(command);
+        currFunction.addCommand(command);
     }
 
     @Override
@@ -84,9 +111,10 @@ public class Tree extends IRBaseListener {
         String variable = ctx.ID(0).getText();
         String array = ctx.ID(1).getText();
         String index = ctx.alnum().getText();
-        Command command = new ArrayLoadCommand(variable, array, index);
+        Command command = new ArrayLoadCommand(currFunction.getArgument(variable),
+                currFunction.getArgument(array), currFunction.getArgument(index));
 
-        currentBasicBlocks.addCommand(command);
+        currFunction.addCommand(command);
     }
 
     @Override
@@ -94,9 +122,10 @@ public class Tree extends IRBaseListener {
         String array = ctx.ID().getText();
         String index = ctx.alnum(0).getText();
         String value = ctx.alnum(1).getText();
-        Command command = new ArrayLoadCommand(array, index, value);
+        Command command = new ArrayLoadCommand(currFunction.getArgument(array),
+                currFunction.getArgument(index), currFunction.getArgument(value));
 
-        currentBasicBlocks.addCommand(command);
+        currFunction.addCommand(command);
     }
 
     @Override
@@ -106,22 +135,23 @@ public class Tree extends IRBaseListener {
 
         if (ctx.alnum().size() == 1) {
             String value = ctx.alnum(0).getText();
-            command = new AssignmentCommand(variable, value);
+            command = new AssignmentCommand(currFunction.getArgument(variable), currFunction.getArgument(value));
         } else {
             String size = ctx.alnum(0).getText();
             String value = ctx.alnum(1).getText();
-            command = new AssignmentCommand(variable, size, value);
+            command = new AssignmentCommand(currFunction.getArgument(variable),
+                    currFunction.getArgument(size), currFunction.getArgument(value));
         }
 
-        currentBasicBlocks.addCommand(command);
+        currFunction.addCommand(command);
     }
 
     @Override
     public void enterLabel(IRParser.LabelContext ctx) {
         String label = ctx.ID().getText();
 
-        currentBasicBlocks.startBasicBlock(label);
-        currentBasicBlocks.addCommand(new LabelCommand(label));
+        currFunction.startBasicBlock(label);
+        currFunction.addCommand(new LabelCommand(label));
     }
 
 }
