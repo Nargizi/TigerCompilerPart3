@@ -7,3 +7,4 @@ src/*.class
 src/IR*
 *.iml
 irs/
+!IRCommand.java
