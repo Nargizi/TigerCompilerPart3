@@ -107,7 +107,7 @@ public class Tree extends IRBaseListener {
     @Override
     public void exitReturn_operators(IRParser.Return_operatorsContext ctx) {
         // TODO: Implement return command, cause don't remember shit atm
-        IRCommand command = ctx.alnum() == null ?
+        IRCommand command = ctx.alnum() != null ?
                 new ReturnCommand(currFunction.getVariable(ctx.alnum().getText())) :
                 new ReturnCommand();
 

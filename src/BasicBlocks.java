@@ -100,5 +100,15 @@ public class BasicBlocks {
             }
             return usedVars;
         }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("\"");
+            for (var command: commands)
+                builder.append(command).append("\n");
+            return builder.append("\"").toString();
+
+        }
     }
 }

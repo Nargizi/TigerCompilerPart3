@@ -23,7 +23,7 @@ public class Main {
 
      */
 
-    public static void compile(File file) throws IOException {
+    public static void compile(File file, boolean graphViz, boolean liveness) throws IOException {
         CharStream codePointCharStream = CharStreams.fromPath(Path.of(file.getAbsolutePath()));
         IRLexer lexer = new IRLexer(codePointCharStream);
         IRParser parser = new IRParser(new CommonTokenStream(lexer));
@@ -33,12 +33,27 @@ public class Main {
         walker.walk(t, tree);
         Class c = t.getCurrClass();
         Function f = c.getFunctions().get("main");
-        NaiveAllocator allocator = new NaiveAllocator(f);
-        Translator translator = new Translator(allocator);
-            for(int i = 0; i < f.getNumCommands(); ++i){
-                for(var command: translator.translate(f.getCommand(i)))
-                    System.out.println(command);
-            }
+//        NaiveAllocator allocator = new NaiveAllocator(f);
+//        Translator translator = new Translator(allocator);
+//        for(int i = 0; i < f.getNumCommands(); ++i){
+//            for(var command: translator.translate(f.getCommand(i)))
+//                System.out.println(command);
+//        }
+
+        String fileName = file.getName();
+        fileName = fileName.substring(0, fileName.lastIndexOf("ir"));
+        File folder = file.getParentFile();
+        LivenessAnalysis livenessAnalysis = new LivenessAnalysis(c);
+        if(graphViz){
+            GraphVizBuilder builder = new GraphVizBuilder();
+            GraphToGraphvizParser graphvizParser = new GraphToGraphvizParser(builder);
+            graphvizParser.parse(c);
+            builder.toFile(Path.of(folder.getAbsolutePath(), fileName + "cfg.gv").toString());
+        }
+
+        if(liveness){
+            livenessAnalysis.toFile(Path.of(folder.getAbsolutePath(), fileName + "liveness").toString());
+        }
 
 //        File folder = file.getParentFile();
 //        String name = file.getName();
@@ -69,15 +84,21 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         String ir_source = null;
+        boolean graphViz = false, liveness = false;
         for(int i = 0; i < args.length; ++i){
             if(args[i].equals("-r")){
                 ir_source = args[i + 1];
+            }
+            if(args[i].equals("--cfg")){
+                graphViz = true;
+            }
+            if(args[i].equals("--liveness")){
+                liveness = true;
             }
         }
         if (ir_source == null){
             // TODO ERROR
         }
-        System.out.println(ir_source);
-        compile(new File(ir_source));
+        compile(new File(ir_source), graphViz, liveness);
     }
 }

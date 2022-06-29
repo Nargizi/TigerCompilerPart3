@@ -78,6 +78,9 @@ public class Function {
         controlFlowGraph.endBasicBlock(label, isConditional);
     }
 
+    public BasicBlocks getControlFlowGraph() {
+        return controlFlowGraph;
+    }
 
     public IRCommand getCommand(Integer i){
         return commandList.get(i);

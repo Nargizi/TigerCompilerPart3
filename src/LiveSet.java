@@ -1,3 +1,6 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -60,12 +63,13 @@ public class LiveSet {
     @Override
     public String toString() {
         StringBuilder rep = new StringBuilder();
-        rep.append("Function - ").append(function.getFuncName());
+        rep.append("Function Start - ").append(function.getFuncName());
         rep.append(":\n");
         for(int i = 0; i < function.getNumCommands(); ++i){
             rep.append(i).append(":").append("INSET: ").append(inSets.get(i))
                     .append(" - ").append("OUTSET: ").append(outSets.get(i)).append("\n");
         }
-        return rep.toString();
+        return rep.append("Function End - ").append(function.getFuncName()).append("\n\n").toString();
     }
+
 }
