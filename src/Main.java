@@ -7,6 +7,8 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Main {
     /*
@@ -27,7 +29,16 @@ public class Main {
         IRParser parser = new IRParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.program();
         ParseTreeWalker walker = new ParseTreeWalker();
-        walker.walk(new Tree(), tree);
+        Tree t = new Tree();
+        walker.walk(t, tree);
+        Class c = t.getCurrClass();
+        Function f = c.getFunctions().get("main");
+        NaiveAllocator allocator = new NaiveAllocator(f);
+        Translator translator = new Translator(allocator);
+            for(int i = 0; i < f.getNumCommands(); ++i){
+                for(var command: translator.translate(f.getCommand(i)))
+                    System.out.println(command);
+            }
 
 //        File folder = file.getParentFile();
 //        String name = file.getName();
@@ -57,16 +68,16 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        test();
-//        String ir_source = null;
-//        for(int i = 0; i < args.length; ++i){
-//            if(args[i].equals("-r")){
-//                ir_source = args[i + 1];
-//            }
-//        }
-//        if (ir_source == null){
-//            // TODO ERROR
-//        }
-//        compile(new File(ir_source));
+        String ir_source = null;
+        for(int i = 0; i < args.length; ++i){
+            if(args[i].equals("-r")){
+                ir_source = args[i + 1];
+            }
+        }
+        if (ir_source == null){
+            // TODO ERROR
+        }
+        System.out.println(ir_source);
+        compile(new File(ir_source));
     }
 }

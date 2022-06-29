@@ -4,9 +4,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class LiveSet {
-    private Map<Integer, Set<Argument>> inSets;
-    private Map<Integer, Set<Argument>> outSets;
-    private Function function;
+    private final Map<Integer, Set<Variable>> inSets;
+    private final Map<Integer, Set<Variable>> outSets;
+    private final Function function;
 
     public LiveSet(Function function){
         this.function = function;
@@ -15,7 +15,7 @@ public class LiveSet {
         init();
     }
 
-    public Set<Argument> getSet(Integer i){
+    public Set<Variable> getSet(Integer i){
         return inSets.getOrDefault(i, new HashSet<>());
     }
 
@@ -28,8 +28,8 @@ public class LiveSet {
         do {
             isUpdate = false;
             for (int i = 0; i < function.getNumCommands(); ++i) {
-                Set<Argument> oldOut = outSets.computeIfAbsent(i, x -> new HashSet<>());
-                Set<Argument> oldIn = inSets.computeIfAbsent(i, x -> new HashSet<>());
+                Set<Variable> oldOut = outSets.computeIfAbsent(i, x -> new HashSet<>());
+                Set<Variable> oldIn = inSets.computeIfAbsent(i, x -> new HashSet<>());
                 update(i);
                 if(!oldOut.equals(outSets.get(i)) || !oldIn.equals(inSets.get(i)))
                     isUpdate = true;
@@ -42,15 +42,15 @@ public class LiveSet {
         inSets.put(i, getLiveSet(function.getCommand(i), i));
     }
 
-    private Set<Argument> getLiveSet(Command i, Integer index){
-        Set<Argument> set = new HashSet<>(outSets.getOrDefault(index, new HashSet<>()));
+    private Set<Variable> getLiveSet(IRCommand i, Integer index){
+        Set<Variable> set = new HashSet<>(outSets.getOrDefault(index, new HashSet<>()));
         set.removeAll(i.getDecl());
         set.addAll(i.getUsed());
         return set;
     }
 
-    private Set<Argument> getOutSet(Set<Integer> successorCommands){
-        Set<Argument> outSet = new HashSet<>();
+    private Set<Variable> getOutSet(Set<Integer> successorCommands){
+        Set<Variable> outSet = new HashSet<>();
         for(var i: successorCommands) {
             outSet.addAll(inSets.getOrDefault(i, new HashSet<>()));
         }
