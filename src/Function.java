@@ -1,38 +1,70 @@
 import java.util.*;
+import java.util.stream.Collectors;
+
 
 public class Function {
-    private List<Command> commandList;
-    private Map<Command, Integer> commandMap;
-    private BasicBlocks controlFlowGraph;
-    private Memory localMemory;
-    private String funcName;
+
+    private final String funcName;
     private Class currClass;
 
+    // memory for functions
+    private final Stack localMemory;
+    private final RegisterMemory intArgumentMemory;
+    private final RegisterMemory floatArgumentMemory;
+
+    private final Map<IRCommand, Integer> commandMap;
+    private List<IRCommand> commandList;
+    private final BasicBlocks controlFlowGraph;
+
+
+    // predefined registers
+    final static List<Register> intArgumentRegisters = List.of("a0", "a1", "a2", "a3")
+            .stream().map(s -> new Register(s, Type.Integer)).collect(Collectors.toList());
+
+    final static List<Register> floatArgumentRegisters = List.of("f12", "f14")
+            .stream().map(s -> new Register(s, Type.Float)).collect(Collectors.toList());
+
+
+
     public Function(String name) {
-        this.localMemory = new Memory(new Register("sp"));
+        this.funcName = name;
+        this.currClass = null;
+
+        // memory initialization
+        this.localMemory = new Stack(new Register("sp", Type.Integer));
+        this.intArgumentMemory = new RegisterMemory(intArgumentRegisters);
+        this.floatArgumentMemory = new RegisterMemory(floatArgumentRegisters);
+
         this.commandList = new ArrayList<>();
         this.controlFlowGraph = new BasicBlocks();
         this.commandMap = new HashMap<>();
-        this.funcName = name;
-        this.currClass = null;
+
     }
 
     public String getFuncName() {
         return funcName;
     }
 
-    public void addLocalVar(Argument a){
-        localMemory.declareVariable(a);
+    public void addLocalVar(Variable v){
+        localMemory.declareVariable(v);
     }
 
+    public void addArgument(Variable v) {
+        if (v.getType().equals(Type.Integer)){
+            if(!intArgumentMemory.declareVariable(v))
+                localMemory.declareVariable(v);
+        } else {
+            if(!floatArgumentMemory.declareVariable(v))
+                localMemory.declareVariable(v);
+        }
+    }
 
-    public void addCommand(Command c){
+    public void addCommand(IRCommand c){
         c.setBlock(controlFlowGraph.getCurrentBlock());
         commandList.add(c);
         commandMap.put(c, commandMap.size());
         controlFlowGraph.addCommand(c);
     }
-
 
     public void startBasicBlock(String label){
         controlFlowGraph.startBasicBlock(label);
@@ -46,16 +78,13 @@ public class Function {
         controlFlowGraph.endBasicBlock(label, isConditional);
     }
 
-    public BasicBlocks getControlFlowGraph() {
-        return controlFlowGraph;
-    }
 
-    public Command getCommand(Integer i){
+    public IRCommand getCommand(Integer i){
         return commandList.get(i);
     }
 
-    public Memory.Address getAddress(Argument arg){
-        Memory.Address add;
+    public Address getAddress(Variable arg){
+        Address add;
         add = localMemory.getAddress(arg);
         // search for variable address in static memory
         if(add == null && currClass != null){
@@ -64,13 +93,22 @@ public class Function {
         return add;
     }
 
-    public Argument getArgument(String value){
-        Argument arg;
-        arg = localMemory.getArgument(value);
-        // search for variable in static memory
-        if(arg instanceof ConstantArgument && currClass != null){
-            arg = currClass.getArgument(value);
-        }
+    public Register getRegister(Variable arg){
+        if (arg.getType().equals(Type.Float))
+            return floatArgumentMemory.getAddress(arg);
+        return intArgumentMemory.getAddress(arg);
+    }
+
+    public Argument getVariable(String name){
+        Argument arg = localMemory.getVariable(name);
+        if (arg == null)
+            arg = floatArgumentMemory.getVariable(name);
+        if (arg == null)
+            arg = intArgumentMemory.getVariable(name);
+        if (arg == null)
+            arg = currClass.getVariable(name);
+        if (arg == null)
+            arg = new Constant(name);
         return arg;
     }
 
@@ -87,9 +125,9 @@ public class Function {
     }
 
     public Set<Integer> getFollowSet(Integer i){
-        Command curr = commandList.get(i);
+        IRCommand curr = commandList.get(i);
         BasicBlocks.Block currBlock = curr.getBlock();
-        List<Command> commands = currBlock.getCommands();
+        List<IRCommand> commands = currBlock.getCommands();
 
         // get indices of commands which might follow current command in program flow
         if (commands.indexOf(curr) == commands.size() - 1){

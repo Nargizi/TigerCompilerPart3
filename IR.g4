@@ -1,18 +1,18 @@
 grammar IR;
 
-ID: [a-zA-Z][0-9a-zA-Z_]*;
-NUM: [0-9]+;
-WHITESPACE: [ \t\n] -> skip;
-alnum: ID | NUM;
-COMMA: ',';
 
 // TODO: arrays
 program: START_PROGRAM ID static_int_list static_float_list function* END_PROGRAM ID;
 START_PROGRAM: 'start_program';
 END_PROGRAM: 'end_program';
 
-static_int_list: STATIC_INT_LIST COLON (ID (COMMA ID)*)?;
-static_float_list: STATIC_FLOAT_LIST COLON (ID (COMMA ID)*)?;
+static_int_list: STATIC_INT_LIST COLON (var_dec (COMMA var_dec)*)?;
+static_float_list: STATIC_FLOAT_LIST COLON (var_dec (COMMA var_dec)*)?;
+
+LB: '[';
+RB: ']';
+
+var_dec: ID (LB NUM RB)?;
 
 STATIC_INT_LIST: 'static-int-list';
 STATIC_FLOAT_LIST: 'static-float-list';
@@ -31,8 +31,8 @@ RP: ')';
 
 args_list: (ID ID (COMMA ID ID)*)?;
 
-int_list: INT_LIST COLON (ID (COMMA ID)*)?;
-float_list: FLOAT_LIST COLON (ID (COMMA ID)*)?;
+int_list: INT_LIST COLON (var_dec (COMMA var_dec)*)?;
+float_list: FLOAT_LIST COLON (var_dec (COMMA var_dec)*)?;
 
 INT_LIST: 'int-list';
 FLOAT_LIST: 'float-list';
@@ -86,3 +86,9 @@ ASSIGN: 'assign';
 label: ID COLON;
 
 COLON: ':';
+
+ID: [_a-zA-Z][_0-9a-zA-Z]*;
+NUM: [0-9]+;
+WHITESPACE: [ \t\n] -> skip;
+alnum: ID | NUM;
+COMMA: ',';

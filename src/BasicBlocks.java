@@ -47,7 +47,7 @@ public class BasicBlocks {
         currentBlock = new Block();
     }
 
-    public void addCommand(Command command) {
+    public void addCommand(IRCommand command) {
         assert currentBlock != null;
         currentBlock.addCommand(command);
     }
@@ -60,11 +60,15 @@ public class BasicBlocks {
 
     public class Block {
         private Set<Block> nextBlocks;
-        private List<Command> commands;
+        private List<IRCommand> commands;
 
         public Block() {
             nextBlocks = new HashSet<>();
             commands = new ArrayList<>();
+        }
+
+        public void setCommands(List<IRCommand> commands) {
+            this.commands = commands;
         }
 
         public Set<Block> getNextBlocks() {
@@ -75,11 +79,11 @@ public class BasicBlocks {
             nextBlocks.add(nextBlock);
         }
 
-        public List<Command> getCommands() {
+        public List<IRCommand> getCommands() {
             return commands;
         }
 
-        public void addCommand(Command command) {
+        public void addCommand(IRCommand command) {
             commands.add(command);
         }
 

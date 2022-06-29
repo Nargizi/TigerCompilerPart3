@@ -6,3 +6,4 @@ tigers/
 src/*.class
 src/IR*
 *.iml
+irs/

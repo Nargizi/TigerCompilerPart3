@@ -1,85 +1,58 @@
-import org.antlr.v4.runtime.CharStream;
-
 import java.util.Objects;
 
+
 public interface Argument {
-    String getValue();
-    void setValue(String value);
-    Register getRegister();
-    void setRegister(Register register);
-    Integer getSize();
-    void setSize(Integer size);
-    boolean isEmpty();
+
 }
 
-class IntArgument implements Argument {
-    private String value;
-    private Integer size;
-    private Register register;
-    private boolean isEmpty;
+enum Type {
+    Float(8, "float"),
+    Integer(4, "int");
 
-    public IntArgument(String value, Integer size){
-        this.value = value;
+
+    private final Integer size;
+    private final String name;
+
+    Type(Integer size, String name) {
         this.size = size;
-        this.register = null;
-        checkState();
+        this.name = name;
     }
 
-    public IntArgument(String value){
-        this(value, 1);
-    }
-
-    private void checkState(){
-        this.isEmpty = (value == null) || (value.isBlank());
-    }
-
-    @Override
-    public String getValue() {
-        return value;
-    }
-
-    @Override
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    @Override
-    public Register getRegister() {
-        return register;
-    }
-
-    @Override
-    public void setRegister(Register register) {
-        this.register = register;
-    }
-
-    @Override
     public Integer getSize() {
         return size;
     }
 
     @Override
-    public void setSize(Integer size) {
-        this.size = size;
-    }
-    
-
-    @Override
-    public boolean isEmpty() {
-        return isEmpty;
-    }
-
-    @Override
     public String toString() {
+        return name;
+    }
+
+
+}
+
+class Constant implements Argument {
+    private String value;
+
+    public Constant(String value){
+        this.value = value;
+    }
+
+    public String getValue() {
         return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Argument argument = (Argument) o;
-        return Objects.equals(value, argument.getValue());
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        Constant constant = (Constant) o;
+        return Objects.equals(value, constant.value);
     }
 
     @Override
@@ -87,123 +60,85 @@ class IntArgument implements Argument {
         return Objects.hash(value);
     }
 
-}
-
-class FloatArgument implements Argument {
-    private String value;
-    private Integer size;
-    private Register register;
-    private boolean isEmpty;
-
-    public FloatArgument(String value, Integer size){
-        this.value = value;
-        this.size = size;
-        this.register = null;
-        checkState();
-    }
-
-    public FloatArgument(String value){
-        this(value, 1);
-    }
-
-    private void checkState(){
-        this.isEmpty = (value == null) || (value.isBlank());
-    }
-
-    @Override
-    public String getValue() {
-        return value;
-    }
-
-    @Override
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    @Override
-    public Register getRegister() {
-        return register;
-    }
-
-    @Override
-    public void setRegister(Register register) {
-        this.register = register;
-    }
-
-    @Override
-    public Integer getSize() {
-        return size;
-    }
-
-    @Override
-    public void setSize(Integer size) {
-        this.size = size;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return isEmpty;
-    }
-
     @Override
     public String toString() {
         return value;
     }
+}
+
+class Variable implements Argument {
+    private String name;
+    private Type type;
+
+    public Variable(String name, Type type){
+        this.name = name;
+        this.type = type;
+    }
+
+    public Type getType(){
+        return type;
+    }
+
+    public String getName(){
+        return name;
+    }
+
+    public Integer getSize() {return type.getSize();}
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Argument argument = (Argument) o;
-        return Objects.equals(value, argument.getValue());
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        Variable variable = (Variable) o;
+        return Objects.equals(name, variable.name) && type == variable.type;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value);
+        return Objects.hash(name, type);
     }
-
 }
 
-class ConstantArgument implements Argument{
-    private String value;
+class Register extends Variable{
 
-    public ConstantArgument(String value){
-        this.value = value;
+    public Register(String name, Type type) {
+        super(name, type);
     }
 
     @Override
-    public String getValue() {
-        return null;
+    public String toString() {
+        return "$" + getName();
+    }
+}
+
+class Array extends Variable {
+    private Integer size;
+
+    public Array(String name, Type type, Integer size){
+        super(name, type);
+        this.size = size;
     }
 
-    @Override
-    public void setValue(String value) {
-
-    }
-
-    @Override
-    public Register getRegister() {
-        return null;
-    }
-
-    @Override
-    public void setRegister(Register register) {
-
-    }
-
-    @Override
     public Integer getSize() {
-        return null;
+        return size * super.getSize();
     }
 
     @Override
-    public void setSize(Integer size) {
-
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
+        Array array = (Array) o;
+        return Objects.equals(size, array.size);
     }
 
     @Override
-    public boolean isEmpty() {
-        return false;
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), size);
     }
 }

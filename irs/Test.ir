@@ -1,0 +1,51 @@
+start_program test
+    static-int-list:
+    static-float-list:
+
+start_function main
+    int main()
+    int-list: _2_a, _2_b, _2_c, _t1, _t2, _t3, _t4, _t5, _t6, _t7, _t8, _t9, _t10, _t11, _t12
+    float-list:
+    main:
+    assign, _2_a, 5,
+    assign, _2_b, 5,
+    add, 200, 100, _t1
+    assign, _2_c, _t1,
+    call, printi, _2_c
+    add, _2_a, 50, _t2
+    assign, _2_c, _t2,
+    call, printi, _2_c
+    add, _2_a, _2_b, _t3
+    assign, _2_c, _t3,
+    call, printi, _2_c
+    sub, 200, 100, _t4
+    assign, _2_c, _t4,
+    call, printi, _2_c
+    sub, _2_a, 50, _t5
+    assign, _2_c, _t5,
+    call, printi, _2_c
+    sub, _2_a, _2_b, _t6
+    assign, _2_c, _t6,
+    call, printi, _2_c
+    mult, 200, 100, _t7
+    assign, _2_c, _t7,
+    call, printi, _2_c
+    mult, _2_a, 50, _t8
+    assign, _2_c, _t8,
+    call, printi, _2_c
+    mult, _2_a, _2_b, _t9
+    assign, _2_c, _t9,
+    call, printi, _2_c
+    div, 200, 100, _t10
+    assign, _2_c, _t10,
+    call, printi, _2_c
+    div, _2_a, 2, _t11
+    assign, _2_c, _t11,
+    call, printi, _2_c
+    div, _2_a, _2_b, _t12
+    assign, _2_c, _t12,
+    call, printi, _2_c
+    return, 0, ,
+end_function main
+
+end_program test

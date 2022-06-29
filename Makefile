@@ -1,4 +1,4 @@
-ANTLR := /Users/Andria/Desktop/Uni_Stuff/Compilers/ANTLR-4.9.3/antlr-4.9.3-complete.jar
+ANTLR := /Users/nargizi/Desktop/Uni/Compilers/ANTLR-4.9.3/antlr-4.9.3-complete.jar
 GRAMMAR := IR.g4
 MAIN_CLASS_NAME := Main
 JAR_DIR := cs8803_bin
@@ -26,6 +26,15 @@ $(BUILD_DIR)/org
 
 SOURCES := \
 src/Main.java \
+src/Argument.java \
+src/BasicBlocks.java \
+src/Class.java \
+src/IRCommand.java \
+src/Function.java \
+src/Memory.java \
+src/RegisterAllocator.java \
+src/MIPSCommand.java \
+
 
 .PHONY :
 all: $(COMPILER_JAR)
