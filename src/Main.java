@@ -33,12 +33,12 @@ public class Main {
         walker.walk(t, tree);
         Class c = t.getCurrClass();
         Function f = c.getFunctions().get("main");
-//        NaiveAllocator allocator = new NaiveAllocator(f);
-//        Translator translator = new Translator(allocator);
-//        for(int i = 0; i < f.getNumCommands(); ++i){
-//            for(var command: translator.translate(f.getCommand(i)))
-//                System.out.println(command);
-//        }
+        CFGAllocator allocator = new CFGAllocator(f);
+        Translator translator = new Translator(allocator);
+        for(int i = 0; i < f.getNumCommands(); ++i){
+            for(var command: translator.translate(f.getCommand(i)))
+                System.out.println(command);
+        }
 
         String fileName = file.getName();
         fileName = fileName.substring(0, fileName.lastIndexOf("ir"));

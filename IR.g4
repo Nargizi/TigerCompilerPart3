@@ -12,7 +12,7 @@ static_float_list: STATIC_FLOAT_LIST COLON (var_dec (COMMA var_dec)*)?;
 LB: '[';
 RB: ']';
 
-var_dec: ID (LB NUM RB)?;
+var_dec: ID (LB INT RB)?;
 
 STATIC_INT_LIST: 'static-int-list';
 STATIC_FLOAT_LIST: 'static-float-list';
@@ -88,7 +88,9 @@ label: ID COLON;
 COLON: ':';
 
 ID: [_a-zA-Z][_0-9a-zA-Z]*;
-NUM: [0-9]+;
+INT: [0-9]+;
+FLOAT: INT '.' INT;
+
 WHITESPACE: [ \t\n] -> skip;
-alnum: ID | NUM;
+alnum: ID | INT | FLOAT;
 COMMA: ',';

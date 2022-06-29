@@ -2,7 +2,7 @@ import java.util.Objects;
 
 
 public interface Argument {
-
+    Type getType();
 }
 
 enum Type {
@@ -32,9 +32,11 @@ enum Type {
 
 class Constant implements Argument {
     private String value;
+    private Type type;
 
-    public Constant(String value){
+    public Constant(String value, Type type){
         this.value = value;
+        this.type = type;
     }
 
     public String getValue() {
@@ -63,6 +65,11 @@ class Constant implements Argument {
     @Override
     public String toString() {
         return value;
+    }
+
+    @Override
+    public Type getType() {
+        return type;
     }
 }
 

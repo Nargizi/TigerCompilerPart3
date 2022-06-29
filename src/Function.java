@@ -111,7 +111,10 @@ public class Function {
         if (arg == null)
             arg = currClass.getVariable(name);
         if (arg == null)
-            arg = new Constant(name);
+            if (name.contains("."))
+                arg = new Constant(name, Type.Float);
+            else
+                arg = new Constant(name, Type.Integer);
         return arg;
     }
 
