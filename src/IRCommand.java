@@ -184,7 +184,9 @@ class ReturnCommand extends IRCommand {
     }
     @Override
     public String toString() {
-        return "return " + returnValue;
+        if (returnValue != null)
+            return "return " + returnValue;
+        return "return";
     }
 
 
@@ -337,7 +339,12 @@ class CallCommand extends IRCommand {
 
     @Override
     public String toString() {
-        return "Call" + func;
+        StringBuilder builder = new StringBuilder();
+        builder.append(func).append("( ");
+        for(Argument arg: args)
+            builder.append(arg).append(" ");
+        builder.append(")");
+        return builder.toString();
     }
 
 }
@@ -389,7 +396,12 @@ class CallRCommand extends IRCommand {
 
     @Override
     public String toString() {
-        return var + " = Call" + func;
+        StringBuilder builder = new StringBuilder();
+        builder.append(var).append(" = ").append(func).append("( ");
+        for(Argument arg: args)
+            builder.append(arg).append(" ");
+        builder.append(")");
+        return builder.toString();
     }
 }
 
@@ -448,6 +460,11 @@ class ArrayLoadCommand extends IRCommand {
     @Override
     public int hashCode() {
         return Objects.hash(var, arr, index, block);
+    }
+
+    @Override
+    public String toString() {
+        return var + " = " +  arr+ "[" + index + "] ";
     }
 }
 
@@ -508,6 +525,11 @@ class ArrayStoreCommand extends IRCommand {
     @Override
     public int hashCode() {
         return Objects.hash(arr, index, value, block);
+    }
+
+    @Override
+    public String toString() {
+        return arr+ "[" + index + "] " + " = " + value;
     }
 }
 
@@ -576,7 +598,7 @@ class AssignmentCommand extends IRCommand {
     @Override
     public String toString() {
         return var + " = " +
-                size + ", " + value;
+                 " (size)" + size + ", " + value;
     }
 
 }

@@ -10,8 +10,8 @@ public abstract class RegisterAllocator {
     final static List<Register> floatSavedRegisters = List.of("f20", "f22", "f24", "f26", "28", "f30")
             .stream().map(s -> new Register(s, Type.Float)).collect(Collectors.toList());
 
-    private RegisterMemory savedIntRegisterMemory;
-    private RegisterMemory savedFloatRegisterMemory;
+    protected RegisterMemory savedIntRegisterMemory;
+    protected RegisterMemory savedFloatRegisterMemory;
     protected Function func;
 
     public RegisterAllocator(Function func){
@@ -126,20 +126,105 @@ class NaiveAllocator extends RegisterAllocator {
 }
 
 class CFGAllocator extends RegisterAllocator {
-
+    Set<Variable> currStored;
+    BasicBlocks.Block currBlock;
 
     public CFGAllocator(Function func) {
         super(func);
+        currStored = new HashSet<>();
+        currBlock = null;
     }
+
+    //TODO: return load commands for each stored variable
+    private List<MIPSCommand> enterBlock(BasicBlocks.Block block){
+        List<MIPSCommand> commandList = new ArrayList<>();
+        var usedVars = block.getUsedVars();
+        while(!usedVars.isEmpty() && (savedFloatRegisterMemory.getNumFree() > 3 || savedIntRegisterMemory.getNumFree() > 3)){
+            Variable curr = (Variable) usedVars.poll().getKey();
+            if(curr.getType().equals(Type.Float) && savedFloatRegisterMemory.getNumFree() > 3) {
+                Register reg = load(curr);
+                currStored.add(curr);
+                //TODO: get load command for float
+            }else if (curr.getType().equals(Type.Integer) && savedIntRegisterMemory.getNumFree() > 3){
+                Register reg = load(curr);
+                currStored.add(curr);
+                commandList.add(loadCommand(reg, func.getAddress(curr)));
+            }
+        }
+        currBlock = block;
+        return commandList;
+    }
+
+    //TODO: return store commands for each freed variable
+    private List<MIPSCommand> exitBlock(){
+        List<MIPSCommand> commandList = new ArrayList<>();
+        for(Variable var: currStored){
+            if(var.getType().equals(Type.Float)){
+                //TODO: get store command for float
+            }else{
+                commandList.add(storeCommand(getRegister(var), func.getAddress(var)));
+            }
+            store(var);
+        }
+        currStored.clear();
+        return commandList;
+    }
+
 
     @Override
     public List<MIPSCommand> enterCommand(IRCommand command) {
-        return null;
+        List<MIPSCommand> commandList = new ArrayList<>();
+        BasicBlocks.Block block = command.getBlock();
+        if (currBlock == null || !currBlock.equals(block)){
+            System.out.println("EXIT BLOCK");
+            commandList.addAll(exitBlock());
+            System.out.println("ENTER BLOCK");
+            commandList.addAll(enterBlock(block));
+        }
+
+        Set<Variable> decl = new HashSet<>(command.getDecl());
+        Set<Variable> used = new HashSet<>(command.getUsed());
+
+        decl.removeAll(currStored);
+        used.removeAll(currStored);
+
+        for(Variable var: decl){
+            load(var);
+        }
+
+        for(Variable var: used) {
+            load(var);
+            commandList.add(loadCommand(getRegister(var), func.getAddress(var)));
+        }
+
+        return commandList;
     }
 
     @Override
     public List<MIPSCommand> exitCommand(IRCommand command) {
-        return null;
+        List<MIPSCommand> commandList = new ArrayList<>();
+        BasicBlocks.Block currBlock = command.getBlock();
+        if (currBlock.getCommands().get(currBlock.getCommands().size() - 1).equals(command)){
+            System.out.println("EXIT BLOCK");
+            commandList.addAll(exitBlock());
+        }
+
+        Set<Variable> decl = new HashSet<>(command.getDecl());
+        Set<Variable> used = new HashSet<>(command.getUsed());
+
+        decl.removeAll(currStored);
+        used.removeAll(currStored);
+
+        for(Variable var: decl){
+            commandList.add(storeCommand(getRegister(var), func.getAddress(var)));
+            store(var);
+        }
+
+        for(Variable var: used) {
+            store(var);
+        }
+
+        return commandList;
     }
 }
 

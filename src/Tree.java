@@ -28,7 +28,7 @@ public class Tree extends IRBaseListener {
                 currClass.addStaticVar(new Variable(varNode.ID().getText(), Type.Float));
             else
                 currClass.addStaticVar(new Array(varNode.ID().getText(), Type.Float,
-                                                 Integer.valueOf(varNode.NUM().getText())));
+                                                 Integer.valueOf(varNode.INT().getText())));
         }
     }
 
@@ -39,7 +39,7 @@ public class Tree extends IRBaseListener {
                 currClass.addStaticVar(new Variable(varNode.ID().getText(), Type.Integer));
             else
                 currClass.addStaticVar(new Array(varNode.ID().getText(), Type.Integer,
-                                                 Integer.valueOf(varNode.NUM().getText())));
+                                                 Integer.valueOf(varNode.INT().getText())));
         }
     }
 
@@ -67,7 +67,7 @@ public class Tree extends IRBaseListener {
                 currFunction.addLocalVar(new Variable(varNode.ID().getText(), Type.Float));
             else
                 currFunction.addLocalVar(new Array(varNode.ID().getText(), Type.Float,
-                                                   Integer.valueOf(varNode.NUM().getText())));
+                                                   Integer.valueOf(varNode.INT().getText())));
         }
     }
 
@@ -78,7 +78,7 @@ public class Tree extends IRBaseListener {
                 currFunction.addLocalVar(new Variable(varNode.ID().getText(), Type.Integer));
             else
                 currFunction.addLocalVar(new Array(varNode.ID().getText(), Type.Integer,
-                                                 Integer.valueOf(varNode.NUM().getText())));
+                                                 Integer.valueOf(varNode.INT().getText())));
         }
     }
 
@@ -107,7 +107,7 @@ public class Tree extends IRBaseListener {
     @Override
     public void exitReturn_operators(IRParser.Return_operatorsContext ctx) {
         // TODO: Implement return command, cause don't remember shit atm
-        IRCommand command = ctx.alnum() == null ?
+        IRCommand command = ctx.alnum() != null ?
                 new ReturnCommand(currFunction.getVariable(ctx.alnum().getText())) :
                 new ReturnCommand();
 

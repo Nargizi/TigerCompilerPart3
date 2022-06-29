@@ -1,5 +1,6 @@
 import java.util.Objects;
 
+
 enum Type {
     Float(8, "float"),
     Integer(4, "int");
@@ -104,6 +105,11 @@ class Variable implements Argument {
     public int hashCode() {
         return Objects.hash(name, type);
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
 
 class Register extends Variable{
@@ -145,5 +151,10 @@ class Array extends Variable {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), size);
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

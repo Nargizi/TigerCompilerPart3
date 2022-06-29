@@ -1,51 +1,229 @@
-start_program test
-    static-int-list:
+start_program demo_priority_queue
+    static-int-list: _0_MAX_SIZE, _0_keys[21], _0_values[21], _0_size
     static-float-list:
+
+start_function swap
+    void swap(int _1_i, int _1_j)
+    int-list: _1_i, _1_j, _2_tmp_key, _2_tmp_value, _t1, _t2, _t3, _t4
+    float-list:
+    swap:
+    array_load, _t1, _0_keys, _1_j
+    assign, _2_tmp_key, _t1,
+    array_load, _t2, _0_values, _1_j
+    assign, _2_tmp_value, _t2,
+    array_load, _t3, _0_keys, _1_i
+    array_store, _0_keys, _1_j, _t3
+    array_load, _t4, _0_values, _1_i
+    array_store, _0_values, _1_j, _t4
+    array_store, _0_keys, _1_i, _2_tmp_key
+    array_store, _0_values, _1_i, _2_tmp_value
+    return, , ,
+end_function swap
+
+start_function up_heap
+    void up_heap(int _3_from)
+    int-list: _3_from, _4_swap_made, _4_parent, _t5, _t6, _t7, _t8, _t9, _t10, _t11, _t12
+    float-list:
+    up_heap:
+    assign, _4_swap_made, 1,
+    div, _3_from, 2, _t5
+    assign, _4_parent, _t5,
+    _L0:
+    assign, _t6, 1,
+    brgt, _4_parent, 0, _L2
+    assign, _t6, 0,
+    _L2:
+    assign, _t7, 1,
+    brneq, _4_swap_made, 0, _L3
+    assign, _t7, 0,
+    _L3:
+    and, _t6, _t7, _t8
+    breq, _t8, 0, _L1
+    array_load, _t9, _0_keys, _4_parent
+    array_load, _t10, _0_keys, _3_from
+    assign, _t11, 1,
+    brgt, _t9, _t10, _L6
+    assign, _t11, 0,
+    _L6:
+    breq, _t11, 0, _L4
+    call, swap, _4_parent, _3_from
+    assign, _3_from, _4_parent,
+    div, _3_from, 2, _t12
+    assign, _4_parent, _t12,
+    goto, _L5, ,
+    _L4:
+    assign, _4_swap_made, 0,
+    _L5:
+    goto, _L0, ,
+    _L1:
+    return, , ,
+end_function up_heap
+
+start_function down_heap
+    void down_heap(int _5_at)
+    int-list: _5_at, _6_right, _6_left, _6_l, _6_r, _t13, _t14, _t15, _t16, _t17, _t18, _t19, _t20, _t21, _t22, _t23, _7_child, _t24, _t25, _t26, _t27
+    float-list:
+    down_heap:
+    mult, _5_at, 2, _t13
+    assign, _6_left, _t13,
+    add, _6_left, 1, _t14
+    assign, _6_right, _t14,
+    assign, _6_l, 0,
+    assign, _6_r, 0,
+    assign, _t15, 1,
+    brleq, _6_left, _0_size, _L8
+    assign, _t15, 0,
+    _L8:
+    breq, _t15, 0, _L7
+    array_load, _t16, _0_keys, _5_at
+    array_load, _t17, _0_keys, _6_left
+    assign, _t18, 1,
+    brgt, _t16, _t17, _L10
+    assign, _t18, 0,
+    _L10:
+    breq, _t18, 0, _L9
+    assign, _6_l, 1,
+    _L9:
+    _L7:
+    assign, _t19, 1,
+    brleq, _6_right, _0_size, _L12
+    assign, _t19, 0,
+    _L12:
+    breq, _t19, 0, _L11
+    array_load, _t20, _0_keys, _5_at
+    array_load, _t21, _0_keys, _6_right
+    assign, _t22, 1,
+    brgt, _t20, _t21, _L14
+    assign, _t22, 0,
+    _L14:
+    breq, _t22, 0, _L13
+    assign, _6_r, 1,
+    _L13:
+    _L11:
+    or, _6_r, _6_l, _t23
+    breq, _t23, 0, _L15
+    and, _6_r, _6_l, _t24
+    breq, _t24, 0, _L16
+    array_load, _t25, _0_keys, _6_left
+    array_load, _t26, _0_keys, _6_right
+    assign, _t27, 1,
+    brlt, _t25, _t26, _L20
+    assign, _t27, 0,
+    _L20:
+    breq, _t27, 0, _L18
+    assign, _7_child, _6_left,
+    goto, _L19, ,
+    _L18:
+    assign, _7_child, _6_right,
+    _L19:
+    goto, _L17, ,
+    _L16:
+    breq, _6_l, 0, _L21
+    assign, _7_child, _6_left,
+    goto, _L22, ,
+    _L21:
+    assign, _7_child, _6_right,
+    _L22:
+    _L17:
+    call, swap, _5_at, _7_child
+    call, down_heap, _7_child
+    _L15:
+    return, , ,
+end_function down_heap
+
+start_function peek
+    int peek()
+    int-list: _9_result, _t28
+    float-list:
+    peek:
+    array_load, _t28, _0_values, 1
+    assign, _9_result, _t28,
+    return, _9_result, ,
+end_function peek
+
+start_function push
+    void push(int _10_key, int _10_value)
+    int-list: _10_key, _10_value, _t29, _t30
+    float-list:
+    push:
+    assign, _t29, 1,
+    breq, _0_size, _0_MAX_SIZE, _L24
+    assign, _t29, 0,
+    _L24:
+    breq, _t29, 0, _L23
+    call, exit, 1
+    _L23:
+    add, _0_size, 1, _t30
+    assign, _0_size, _t30,
+    array_store, _0_keys, _0_size, _10_key
+    array_store, _0_values, _0_size, _10_value
+    call, up_heap, _0_size
+    return, , ,
+end_function push
+
+start_function pop
+    void pop()
+    int-list: _t31, _t32, _t33, _t34
+    float-list:
+    pop:
+    assign, _t31, 1,
+    breq, _0_size, 0, _L26
+    assign, _t31, 0,
+    _L26:
+    breq, _t31, 0, _L25
+    call, exit, 2
+    _L25:
+    array_load, _t32, _0_keys, _0_size
+    array_store, _0_keys, 1, _t32
+    array_load, _t33, _0_values, _0_size
+    array_store, _0_values, 1, _t33
+    sub, _0_size, 1, _t34
+    assign, _0_size, _t34,
+    call, down_heap, 1
+    return, , ,
+end_function pop
+
+start_function init_data
+    void init_data()
+    int-list:
+    float-list:
+    init_data:
+    call, push, 5, 108
+    call, push, 8, 87
+    call, push, 18, 100
+    call, push, 22, 33
+    call, push, 6, 111
+    call, push, 7, 32
+    call, push, 11, 111
+    call, push, 13, 114
+    call, push, 15, 108
+    call, push, 0, 72
+    call, push, 1, 101
+    call, push, 2, 108
+    return, , ,
+end_function init_data
 
 start_function main
     int main()
-    int-list: _2_a, _2_b, _2_c, _t1, _t2, _t3, _t4, _t5, _t6, _t7, _t8, _t9, _t10, _t11, _t12
+    int-list: _14_value, _14_i, _14_n
     float-list:
     main:
-    assign, _2_a, 5,
-    assign, _2_b, 5,
-    add, 200, 100, _t1
-    assign, _2_c, _t1,
-    call, printi, _2_c
-    add, _2_a, 50, _t2
-    assign, _2_c, _t2,
-    call, printi, _2_c
-    add, _2_a, _2_b, _t3
-    assign, _2_c, _t3,
-    call, printi, _2_c
-    sub, 200, 100, _t4
-    assign, _2_c, _t4,
-    call, printi, _2_c
-    sub, _2_a, 50, _t5
-    assign, _2_c, _t5,
-    call, printi, _2_c
-    sub, _2_a, _2_b, _t6
-    assign, _2_c, _t6,
-    call, printi, _2_c
-    mult, 200, 100, _t7
-    assign, _2_c, _t7,
-    call, printi, _2_c
-    mult, _2_a, 50, _t8
-    assign, _2_c, _t8,
-    call, printi, _2_c
-    mult, _2_a, _2_b, _t9
-    assign, _2_c, _t9,
-    call, printi, _2_c
-    div, 200, 100, _t10
-    assign, _2_c, _t10,
-    call, printi, _2_c
-    div, _2_a, 2, _t11
-    assign, _2_c, _t11,
-    call, printi, _2_c
-    div, _2_a, _2_b, _t12
-    assign, _2_c, _t12,
-    call, printi, _2_c
+    assign, _0_MAX_SIZE, 20,
+    assign, _0_keys, 21, 0
+    assign, _0_values, 21, 0
+    assign, _0_size, 0,
+    call, init_data
+    assign, _14_n, _0_size,
+    assign, _14_i, 1,
+    _L27:
+    brgt, _14_i, _14_n, _L28
+    callr, _14_value, peek
+    call, printi, _14_value
+    call, pop
+    add, _14_i, 1, _14_i
+    goto, _L27, ,
+    _L28:
     return, 0, ,
 end_function main
 
-end_program test
+end_program demo_priority_queue

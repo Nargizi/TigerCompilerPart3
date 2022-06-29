@@ -12,12 +12,23 @@ public class GraphVizBuilder {
         builder.append("digraph ").append(name).append(" {").append("\n");
     }
 
+    public void startSubgraph(String name) {builder.append("subgraph ").append(name).append("{").append("\n");}
+
     public void startDigraph(){
         this.startDigraph("");
     }
 
     public void endDigraph(){
         builder.append("}");
+    }
+
+    public void endSubgraph(){
+        endDigraph();
+    }
+
+    public void addAttribute(String attribute, String value){
+        builder.append("node")
+                .append(" [").append(attribute).append(" = ").append(value).append(" ]").append("\n");
     }
 
     public void addAttribute(String node, String attribute, String value){

@@ -91,14 +91,26 @@ public class BasicBlocks {
             return commands.size() == 0;
         }
 
-        public Map<Argument, Integer> getUsedVars(){
+        public PriorityQueue<Map.Entry<Argument, Integer>> getUsedVars(){
+            PriorityQueue<Map.Entry<Argument, Integer>> pq = new PriorityQueue<>(Map.Entry.comparingByValue(Comparator.reverseOrder()));
             Map<Argument, Integer> usedVars = new HashMap<>();
             for(var c: commands){
                 for(var v: c.getUsed()){
                     usedVars.merge(v, 1, Integer::sum);
                 }
             }
-            return usedVars;
+            pq.addAll(usedVars.entrySet());
+            return pq;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("\"");
+            for (var command: commands)
+                builder.append(command).append("\n");
+            return builder.append("\"").toString();
+
         }
     }
 }
