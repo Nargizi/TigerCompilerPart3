@@ -36,6 +36,7 @@ public class Main {
         NaiveAllocator allocator = new NaiveAllocator(f);
         Translator translator = new Translator(allocator);
             for(int i = 0; i < f.getNumCommands(); ++i){
+                System.out.println(f.getCommand(i));
                 for(var command: translator.translate(f.getCommand(i)))
                     System.out.println(command);
             }

@@ -395,14 +395,26 @@ class CallRCommand extends IRCommand {
 
 class ArrayLoadCommand extends IRCommand {
     private final Array arr;
-    private final Argument var;
+    private final Variable var;
     private final Argument index;
     private BasicBlocks.Block block;
 
     public ArrayLoadCommand(Argument var, Array arr, Argument index) {
-        this.var = var;
+        this.var = (Variable)var;
         this.arr =  arr;
         this.index = index;
+    }
+
+    public Array getArray() {
+        return arr;
+    }
+
+    public Variable getVar() {
+        return var;
+    }
+
+    public Argument getIndex() {
+        return index;
     }
 
     @Override
@@ -449,6 +461,18 @@ class ArrayStoreCommand extends IRCommand {
         this.value = value;
         this.arr = arr;
         this.index = index;
+    }
+
+    public Array getArray() {
+        return arr;
+    }
+
+    public Argument getIndex() {
+        return index;
+    }
+
+    public Argument getValue() {
+        return value;
     }
 
     @Override

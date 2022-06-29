@@ -33,12 +33,12 @@ public abstract class RegisterAllocator {
         this.func = func;
     }
 
-    public LoadMIPSCommand loadCommand(Register dest, Address origin){
-        return new LoadMIPSCommand(dest, origin);
+    public LoadMIPSCommand loadCommand(Register dest, Address origin, boolean isFloat){
+        return new LoadMIPSCommand(dest, origin, isFloat);
     }
 
-    public StoreMIPSCommand storeCommand(Register origin, Address dest){
-        return new StoreMIPSCommand(origin, dest);
+    public StoreMIPSCommand storeCommand(Register origin, Address dest, boolean isFloat) {
+        return new StoreMIPSCommand(origin, dest, isFloat);
     }
 
     public Register load(Variable var){
@@ -100,7 +100,7 @@ class NaiveAllocator extends RegisterAllocator {
 
         for(Variable var: used) {
             load(var);
-            commandList.add(loadCommand(getRegister(var), func.getAddress(var)));
+            commandList.add(loadCommand(getRegister(var), func.getAddress(var), var.getType().equals(Type.Float)));
         }
 
         return commandList;
@@ -113,7 +113,7 @@ class NaiveAllocator extends RegisterAllocator {
         Set<Variable> used = command.getUsed();
 
         for(Variable var: decl){
-            commandList.add(storeCommand(getRegister(var), func.getAddress(var)));
+            commandList.add(storeCommand(getRegister(var), func.getAddress(var), var.getType().equals(Type.Float)));
             store(var);
         }
 
