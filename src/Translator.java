@@ -34,7 +34,7 @@ public class Translator {
     }
 
     public String getFunctionExitLabel(Function func) {
-        return "(_EXIT_)_" + func.getFuncName();
+        return "__EXIT__" + func.getFuncName();
     }
 
     public Register load(Variable var){
@@ -67,7 +67,7 @@ public class Translator {
                 commandList.add(new DataTypeMIPSCommand(add.getValue().getName(), add.getKey().getType().equals(Type.Float) ? "float": "word"));
         }
         commandList.add(new AssemblerDirectiveCommand("text"));
-        commandList.add(new AssemblerDirectiveCommand("global", List.of("main")));
+        commandList.add(new AssemblerDirectiveCommand("globl", List.of("main")));
         for(var func: c.getFunctions().values()){
             commandList.addAll(translate(func));
         }
@@ -103,7 +103,7 @@ public class Translator {
             commandList.add(new StoreMIPSCommand(RegisterAllocator.floatSavedRegisters.get(i),
                                                  new Address(SP, argStorage + f.getLocalMemorySize()
                                                          + i * 8 + RegisterAllocator.intSavedRegisters.size() * 4),
-                                                 false));
+                                                 true));
         }
         return commandList;
     }
@@ -149,7 +149,7 @@ public class Translator {
             commandList.add(new LoadMIPSCommand(RegisterAllocator.floatSavedRegisters.get(i),
                                                  new Address(SP, argStorage + f.getLocalMemorySize()
                                                          + i * 8 + RegisterAllocator.intSavedRegisters.size() * 4),
-                                                 false));
+                                                 true));
         }
 
         commandList.add(new BinaryImmediateMIPSCommand(SP, SP, new Constant(String.valueOf(stackSize)), BinaryOperator.ADD));
@@ -401,7 +401,6 @@ public class Translator {
     //TODO: Static Memory
     private List<MIPSCommand> translateArrayVarAssignment(AssignmentCommand command) {
         List<MIPSCommand> commandList = new LinkedList<>();
-
         int size = command.getSize();
         Variable a = (Variable)command.getVar();
         Address aBaseAddress = registerAllocator.func.getLocalAddress(a);
@@ -415,6 +414,9 @@ public class Translator {
             if (b instanceof Constant) {
                 bVariable = getTempVariable(b.getType());
                 bRegister = load(bVariable);
+                commandList.add((bRegister.getType().equals(Type.Float) ?
+                        new LoadFloatCommand(bRegister, (Constant) b) :
+                        new LoadIntCommand(bRegister, (Constant) b)));
             } else {
                 bRegister = registerAllocator.getRegister((Variable)b);
             }
@@ -432,10 +434,8 @@ public class Translator {
             }
 
             if (bVariable != null) store(bVariable);
-
             commandList.add(new StoreMIPSCommand(bRegister, destination, bRegister.getType().equals(Type.Float)));
         }
-
         return  commandList;
     }
 
@@ -490,7 +490,12 @@ public class Translator {
             offset += arg.getSize();
             store(arg);
         }
-        commandList.add(new CallMIPSCommand(command.getFunc()));
+        if(command.getFunc().equals("printi")){
+            commandList.add(new LoadIntCommand(RETURN_INT, new Constant("1")));
+            commandList.add(new SystemMIPSCommand());
+        }else{
+            commandList.add(new CallMIPSCommand(command.getFunc()));
+        }
         return commandList;
     }
     private List<MIPSCommand> translateCallCommand(CallCommand command){

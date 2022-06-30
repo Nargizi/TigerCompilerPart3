@@ -582,6 +582,8 @@ class AssignmentCommand extends IRCommand {
 
     @Override
     public Set<Variable> getDecl() {
+        if(size != 0 || var instanceof Array)
+            return Set.of();
         return extractVars(Set.of(var));
     }
 

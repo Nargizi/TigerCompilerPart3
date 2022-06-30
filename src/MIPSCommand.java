@@ -286,3 +286,10 @@ class AssemblerDirectiveCommand extends MIPSCommand {
 
 }
 
+class SystemMIPSCommand extends  MIPSCommand {
+    @Override
+    public String toString() {
+        return "syscall";
+    }
+}
+
