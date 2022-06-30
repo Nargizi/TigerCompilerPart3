@@ -2,7 +2,7 @@ import java.util.Objects;
 
 
 enum Type {
-    Float(8, "float"), // TODO: discuss whether to keep float's size as 8
+    Float(4, "float"), // TODO: discuss whether to keep float's size as 8
     Integer(4, "int");
 
 

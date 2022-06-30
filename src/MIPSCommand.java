@@ -163,7 +163,7 @@ class LoadIntCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "\t\t" +  "li " + dest + " " + constant;
+        return "\t\t" +  "li " + dest + ", " + constant;
     }
 }
 
@@ -178,7 +178,22 @@ class LoadFloatCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "\t\t" +  "li.s " + dest + " " + constant;
+        return "\t\t" +  "li.s " + dest + ", " + constant;
+    }
+}
+
+class LoadLabelAddressCommand extends MIPSCommand {
+    private Register dest;
+    private DataAddress label;
+
+    public LoadLabelAddressCommand(Register dest, DataAddress label) {
+        this.dest = dest;
+        this.label = label;
+    }
+
+    @Override
+    public String toString() {
+        return "\t\t" +  "la " + dest + ", " + label;
     }
 }
 
@@ -256,7 +271,7 @@ class DataTypeMIPSCommand extends MIPSCommand{
 
     @Override
     public String toString(){
-        return name + ":  ." + type + "  " + initializer ;
+        return name + ":  ." + type + ", " + initializer ;
     }
 
 }

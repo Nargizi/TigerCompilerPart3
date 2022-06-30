@@ -1,14 +1,17 @@
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Translator {
 
-    final static List<Register> intTempRegisters = List.of("t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9")
-            .stream().map(s -> new Register(s, Type.Integer)).collect(Collectors.toList());
+    final static List<Register> intTempRegisters = Stream
+            .of("t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9")
+            .map(s -> new Register(s, Type.Integer)).collect(Collectors.toList());
 
-    final static List<Register> floatTempRegisters = List.of("f4", "f6", "f8", "f10", "f16", "f18")
-            .stream().map(s -> new Register(s, Type.Float)).collect(Collectors.toList());
+    final static List<Register> floatTempRegisters = Stream
+            .of("f4", "f6", "f8", "f10", "f16", "f18")
+            .map(s -> new Register(s, Type.Float)).collect(Collectors.toList());
 
     final static Register SP = new Register("sp", Type.Integer);
     final static Register FP = new Register("fp", Type.Integer);
@@ -16,10 +19,10 @@ public class Translator {
     final static Register RETURN_INT = new Register("v0", Type.Integer);
     final static Register RETURN_FLOAT = new Register("f0", Type.Integer);
 
-    private RegisterMemory savedIntTempMemory;
-    private RegisterMemory savedFloatTempMemory;
+    private final RegisterMemory savedIntTempMemory;
+    private final RegisterMemory savedFloatTempMemory;
     private Integer tempVariableCounter;
-    private RegisterAllocator registerAllocator;
+    private final RegisterAllocator registerAllocator;
 
 
     public Translator(RegisterAllocator registerAllocator){
@@ -197,16 +200,26 @@ public class Translator {
         return commandList;
     }
 
-    //TODO: Static Memory
     private List<MIPSCommand> translateArrayStoreCommand(ArrayStoreCommand command) {
         List<MIPSCommand> commandList = new LinkedList<>(registerAllocator.enterCommand(command));
 
         Variable array = command.getArray();
         Variable tempIndexVar = null, tempSizeVar = null;
         Address arrayAddress = registerAllocator.func.getLocalAddress(command.getArray());
+
+        Variable tempAddressVar = null;
+        if (arrayAddress == null) {
+            DataAddress dataAddress = registerAllocator.func.getGlobalAddress(array);
+            tempAddressVar = getTempVariable(Type.Integer);
+
+            arrayAddress = new Address(load(tempAddressVar), 0);
+            commandList.add(new LoadLabelAddressCommand(arrayAddress.getStart(), dataAddress));
+        }
+
         if(command.getIndex() instanceof Constant) {
             int index = Integer.parseInt(((Constant) command.getIndex()).getValue());
-            arrayAddress = new Address(arrayAddress.getStart(), index * array.getType().getSize() + arrayAddress.getOffset());
+            int existingOffset =arrayAddress.getOffset();
+            arrayAddress = new Address(arrayAddress.getStart(), index * array.getType().getSize() + existingOffset);
         } else {
             Register index = registerAllocator.getRegister((Variable) command.getIndex());
             if(index.getType().equals(Type.Float)){
@@ -222,6 +235,7 @@ public class Translator {
             commandList.add(new BinaryMIPSCommand(index, index, arrayAddress.getStart(), BinaryOperator.ADD,true)); // index = base + index
             arrayAddress = new Address(index, arrayAddress.getOffset());
         }
+
         Argument value = command.getValue();
 
         Register valueRegister;
@@ -248,6 +262,7 @@ public class Translator {
             valueRegister = tempTypeRegister;
         }
 
+        if (tempAddressVar != null) store(tempAddressVar);
         if (tempVariable != null) store(tempVariable);
         if (tempIndexVar != null) store(tempIndexVar);
         if(tempSizeVar != null) store(tempSizeVar);
@@ -260,13 +275,20 @@ public class Translator {
         return commandList;
     }
 
-    //TODO: Static Memory
     private List<MIPSCommand> translateArrayLoadCommand(ArrayLoadCommand command){
         List<MIPSCommand> commandList = new LinkedList<>(registerAllocator.enterCommand(command));
 
         Variable array = command.getArray();
         Address arrayAddress = registerAllocator.func.getLocalAddress(command.getArray());
         Variable tempIndexVar = null, tempSizeVar = null;
+
+        Variable tempAddressVar = null;
+        if (arrayAddress == null) {
+            DataAddress dataAddress = registerAllocator.func.getGlobalAddress(array);
+            tempAddressVar = getTempVariable(Type.Integer);
+            arrayAddress = new Address(load(tempAddressVar), 0);
+            commandList.add(new LoadLabelAddressCommand(arrayAddress.getStart(), dataAddress));
+        }
 
         if(command.getIndex() instanceof Constant) {
             int index = Integer.parseInt(((Constant) command.getIndex()).getValue());
@@ -304,6 +326,7 @@ public class Translator {
                     new IntToFloatCommand(variable, loadRegister) :
                     new FloatToIntCommand(variable, loadRegister));
 
+        if (tempAddressVar != null) store(tempAddressVar);
         if (tempIndexVar != null) store(tempIndexVar);
         if(tempSizeVar != null) store(tempSizeVar);
 
@@ -359,7 +382,6 @@ public class Translator {
         return commandList;
     }
 
-    //TODO: Static Memory
     private List<MIPSCommand> translateArrayArrayAssignment(AssignmentCommand command) {
         List<MIPSCommand> commandList = new LinkedList<>();
 
@@ -368,6 +390,22 @@ public class Translator {
         int size = a.getSize();
         Address aBaseAddress = registerAllocator.func.getLocalAddress(a);
         Address bBaseAddress = registerAllocator.func.getLocalAddress(b);
+
+        Variable aTempAddressVar = null;
+        if(aBaseAddress == null) {
+            DataAddress dataAddress = registerAllocator.func.getGlobalAddress(a);
+            aTempAddressVar = getTempVariable(Type.Integer);
+            aBaseAddress = new Address(load(aTempAddressVar), 0);
+            commandList.add(new LoadLabelAddressCommand(aBaseAddress.getStart(), dataAddress));
+        }
+
+        Variable bTempAddressVar = null;
+        if(bBaseAddress == null) {
+            DataAddress dataAddress = registerAllocator.func.getGlobalAddress(b);
+            bTempAddressVar = getTempVariable(Type.Integer);
+            bBaseAddress = new Address(load(bTempAddressVar), 0);
+            commandList.add(new LoadLabelAddressCommand(bBaseAddress.getStart(), dataAddress));
+        }
 
         for (int i = 0; i < size; i++) {
             Address destination = new Address(aBaseAddress.getStart(), aBaseAddress.getOffset() + i * a.getType().getSize());
@@ -391,18 +429,27 @@ public class Translator {
 
             commandList.add(new StoreMIPSCommand(bRegister, destination, a.getType().equals(Type.Float)));
 
+            if (aTempAddressVar != null) store(aTempAddressVar);
+            if (bTempAddressVar != null) store(bTempAddressVar);
             store(bTemp);
         }
 
         return commandList;
     }
 
-    //TODO: Static Memory
     private List<MIPSCommand> translateArrayVarAssignment(AssignmentCommand command) {
         List<MIPSCommand> commandList = new LinkedList<>();
         int size = command.getSize();
         Variable a = (Variable)command.getVar();
         Address aBaseAddress = registerAllocator.func.getLocalAddress(a);
+
+        Variable aTempAddressVar = null;
+        if(aBaseAddress == null) {
+            DataAddress dataAddress = registerAllocator.func.getGlobalAddress(a);
+            aTempAddressVar = getTempVariable(Type.Integer);
+            aBaseAddress = new Address(load(aTempAddressVar), 0);
+            commandList.add(new LoadLabelAddressCommand(aBaseAddress.getStart(), dataAddress));
+        }
 
         for (int i = 0; i < size; ++i) {
             Address destination = new Address(aBaseAddress.getStart(), aBaseAddress.getOffset() + i * a.getType().getSize());
@@ -432,6 +479,7 @@ public class Translator {
                 store(tempVariable);
             }
 
+            if (aTempAddressVar != null) store(aTempAddressVar);
             if (bVariable != null) store(bVariable);
             commandList.add(new StoreMIPSCommand(bRegister, destination, bRegister.getType().equals(Type.Float)));
         }
@@ -465,8 +513,7 @@ public class Translator {
         for(int i = 0; i < command.getArgs().size(); ++i){
             Variable  arg = null;
             Register r;
-            if (command.getArgs().get(i) instanceof Constant){
-                Constant constant = (Constant) command.getArgs().get(i);
+            if (command.getArgs().get(i) instanceof Constant constant){
                 arg = getTempVariable(constant.getType());
                 r = load(arg);
                 commandList.add(constant.getType().equals(Type.Float) ?
