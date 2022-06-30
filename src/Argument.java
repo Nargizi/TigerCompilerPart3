@@ -1,10 +1,6 @@
 import java.util.Objects;
 
 
-public interface Argument {
-    Type getType();
-}
-
 enum Type {
     Float(8, "float"),
     Integer(4, "int");
@@ -26,17 +22,20 @@ enum Type {
     public String toString() {
         return name;
     }
+}
 
 
+public interface Argument {
+    Type getType();
 }
 
 class Constant implements Argument {
     private String value;
     private Type type;
 
-    public Constant(String value, Type type){
+    public Constant(String value){
         this.value = value;
-        this.type = type;
+        this.type = value.contains(".") ? Type.Float : Type.Integer;
     }
 
     public String getValue() {

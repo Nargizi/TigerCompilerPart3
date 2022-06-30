@@ -41,30 +41,34 @@ class BinaryImmediateMIPSCommand extends MIPSCommand{
 class LoadMIPSCommand extends MIPSCommand {
     private Register dest;
     private Address origin;
+    private boolean isFloat;
 
-    public LoadMIPSCommand(Register dest, Address origin) {
+    public LoadMIPSCommand(Register dest, Address origin, boolean isFloat) {
         this.dest = dest;
         this.origin = origin;
+        this.isFloat = isFloat;
     }
 
     @Override
     public String toString() {
-        return "lw" + " " + dest + ", " + origin;
+        return "l" + (isFloat ? ".s" : "w") + " " + dest + ", " + origin;
     }
 }
 
 class StoreMIPSCommand extends MIPSCommand {
     private Register origin;
     private Address dest;
+    private boolean isFloat;
 
-    public StoreMIPSCommand(Register origin, Address dest) {
+    public StoreMIPSCommand(Register origin, Address dest, boolean isFloat) {
         this.origin = origin;
         this.dest = dest;
+        this.isFloat = isFloat;
     }
 
     @Override
     public String toString() {
-        return "sw" + " " + origin + ", " + dest;
+        return "s" + (isFloat ? ".s" : "w") + " " + origin + ", " + dest;
     }
 }
 
@@ -81,7 +85,11 @@ class BranchMIPSCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return op + " " + a + ", " + b + ", " + label;
+        if (a.getType().equals(Type.Float))
+            // TODO: we need to discuss this
+            return "";
+        else
+            return op + " " + a + ", " + b + ", " + label;
     }
 
 }
@@ -144,6 +152,21 @@ class LoadIntCommand extends MIPSCommand {
     }
 }
 
+class LoadFloatCommand extends MIPSCommand {
+    private Register dest;
+    private Constant constant;
+
+    public LoadFloatCommand(Register dest, Constant constant) {
+        this.dest = dest;
+        this.constant = constant;
+    }
+
+    @Override
+    public String toString() {
+        return "li.s " + dest + " " + constant;
+    }
+}
+
 class MoveMIPSCommand extends MIPSCommand {
     private Register a, b;
 
@@ -169,6 +192,34 @@ class LabelMIPSCommand extends MIPSCommand {
     @Override
     public String toString() {
         return label + ":";
+    }
+}
+
+class IntToFloatCommand extends MIPSCommand {
+    private Register intRegister, floatRegister;
+
+    public IntToFloatCommand(Register floatRegister, Register intRegister) {
+        this.intRegister = intRegister;
+        this.floatRegister = floatRegister;
+    }
+
+    @Override
+    public String toString() {
+        return "cvt.s.w " + floatRegister + ", " + intRegister;
+    }
+}
+
+class FloatToIntCommand extends MIPSCommand {
+    private Register intRegister, floatRegister;
+
+    public FloatToIntCommand(Register intRegister, Register floatRegister) {
+        this.intRegister = intRegister;
+        this.floatRegister = floatRegister;
+    }
+
+    @Override
+    public String toString() {
+        return "cvt.w.s " + intRegister + ", " + floatRegister;
     }
 }
 
