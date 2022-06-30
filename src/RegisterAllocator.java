@@ -234,19 +234,77 @@ class CFGAllocator extends RegisterAllocator {
 }
 
 class BriggsAllocator extends RegisterAllocator {
+    private LivenessAnalysis livenessAnalysis;
+    private InterferenceGraph graph;
 
+    @Override
+    public void reset(Function func){
+        super.reset(func);
+        graph = new InterferenceGraph(livenessAnalysis.getLiveSet(func.getFuncName()),
+                                      intSavedRegisters.stream().limit(5).collect(Collectors.toSet()),
+                                      floatSavedRegisters.stream().limit(3).collect(Collectors.toSet()));
+    }
 
-    public BriggsAllocator() {
+    public BriggsAllocator(LivenessAnalysis livenessAnalysis) {
+        this.livenessAnalysis = livenessAnalysis;
     }
 
     @Override
     public List<MIPSCommand> enterCommand(IRCommand command) {
-        return null;
+        List<MIPSCommand> commandList = new ArrayList<>();
+
+        Set<Variable> decl = new HashSet<>(command.getDecl());
+        Set<Variable> used = new HashSet<>(command.getUsed());
+
+        for(Variable var: used) {
+            if (inRegister(var)) continue;
+            Register reg = graph.getRegister(var);
+            if(reg != null){
+                if(reg.getType().equals(Type.Float))
+                    savedFloatRegisterMemory.declarePair(var, reg);
+                else
+                    savedIntRegisterMemory.declarePair(var, reg);
+                continue;
+            }
+            load(var);
+            commandList.add(loadCommand(getRegister(var), func.getAddress(var), var.getType().equals(Type.Float)));
+        }
+
+        for(Variable var: decl){
+            Register reg = graph.getRegister(var);
+            if(reg != null){
+                if(reg.getType().equals(Type.Float))
+                    savedFloatRegisterMemory.declarePair(var, reg);
+                else
+                    savedIntRegisterMemory.declarePair(var, reg);
+                continue;
+            }
+            if (inRegister(var)) continue;
+            load(var);
+        }
+
+        return commandList;
     }
 
     @Override
     public List<MIPSCommand> exitCommand(IRCommand command) {
-        return null;
+        List<MIPSCommand> commandList = new ArrayList<>();
+
+        Set<Variable> decl = new HashSet<>(command.getDecl());
+        Set<Variable> used = new HashSet<>(command.getUsed());
+
+        for(Variable var: decl){
+            if(graph.getRegister(var) != null) continue;
+            commandList.add(storeCommand(getRegister(var), func.getAddress(var), var.getType().equals(Type.Float)));
+            store(var);
+        }
+
+        for(Variable var: used) {
+            if(graph.getRegister(var) != null) continue;
+            store(var);
+        }
+
+        return commandList;
     }
 }
 

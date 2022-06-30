@@ -2,11 +2,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class InterferenceGraph {
-    /* TODO: nodes for each variable
-        if two variables are alive at same time there is interference between them
-        (represented by edge between corresponding variables' nodes)
-        also nodes need some kind of color indicator
-    */
+
     Map<Argument, Node> intNodes;
     Map<Argument, Node> floatNodes;
 
@@ -40,6 +36,17 @@ public class InterferenceGraph {
                 nodes.get(j).addInterference(nodes.get(i));
             }
         }
+    }
+
+    public Register getRegister(Argument arg) {
+        Node n;
+        if (arg.getType().equals(Type.Integer))
+            n = intNodes.get(arg);
+        else
+            n = floatNodes.get(arg);
+        if (n != null)
+            return n.getRegister();
+        return null;
     }
 
     private void color(final Set<Register> registers, boolean isInt) {

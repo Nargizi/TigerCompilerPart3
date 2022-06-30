@@ -43,15 +43,15 @@ public class Main {
             Translator translator = new Translator(allocator);
             toFile(Path.of(folder.getAbsolutePath(), fileName + "s").toString(), translator.translate(c));
         }
+        LivenessAnalysis livenessAnalysis = new LivenessAnalysis(c);
         if(briggs) {
-            BriggsAllocator allocator = new BriggsAllocator();
+            BriggsAllocator allocator = new BriggsAllocator(livenessAnalysis);
             Translator translator = new Translator(allocator);
             toFile(Path.of(folder.getAbsolutePath(), fileName + "s").toString(), translator.translate(c));
         }
 
 
 
-        LivenessAnalysis livenessAnalysis = new LivenessAnalysis(c);
         if(graphViz){
             GraphVizBuilder builder = new GraphVizBuilder();
             GraphToGraphvizParser graphvizParser = new GraphToGraphvizParser(builder);

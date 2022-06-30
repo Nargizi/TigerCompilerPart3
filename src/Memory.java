@@ -32,6 +32,12 @@ class RegisterMemory implements Memory {
         return true;
     }
 
+    public boolean declarePair(Variable var, Register reg){
+        stored.put(var, reg);
+        varStored.put(var.getName(), var);
+        return true;
+    }
+
     @Override
     public Register getAddress(Variable var){
         return stored.get(var);
