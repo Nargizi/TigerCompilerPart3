@@ -80,7 +80,7 @@ class ConditionalBranchCommand extends IRCommand {
 
     @Override
     public String toString() {
-        return branchCommand + " " + a + ", " + b + ", " + label;
+        return branchCommand + ", " + a + ", " + b + ", " + label;
     }
 
 }
@@ -132,7 +132,7 @@ class GotoCommand extends IRCommand {
 
     @Override
     public String toString() {
-        return "goto" + " " + label;
+        return "goto" + ", " + label + ", ,";
     }
 }
 
@@ -152,6 +152,10 @@ class ReturnCommand extends IRCommand {
         Set<Argument> set = new HashSet<>();
         set.add(returnValue);
         return IRCommand.extractVars(set);
+    }
+
+    public Argument getReturnValue() {
+        return returnValue;
     }
 
     @Override
@@ -185,8 +189,8 @@ class ReturnCommand extends IRCommand {
     @Override
     public String toString() {
         if (returnValue != null)
-            return "return " + returnValue;
-        return "return";
+            return "return, " + returnValue + ", ,";
+        return "return, , ,";
     }
 
 
@@ -226,14 +230,14 @@ class BinaryOperatorCommand extends IRCommand {
     private BinaryOperator op;
     private Argument a;
     private Argument b;
-    private Argument dest;
+    private Variable dest;
     private BasicBlocks.Block block;
 
     public BinaryOperatorCommand(BinaryOperator op, Argument a, Argument b, Argument dest) {
         this.op = op;
         this.a = a;
         this.b = b;
-        this.dest = dest;
+        this.dest = (Variable) dest;
     }
 
     public BinaryOperator getOp() {
@@ -248,13 +252,16 @@ class BinaryOperatorCommand extends IRCommand {
         return b;
     }
 
-    public Argument getDest() {
+    public Variable getDest() {
         return dest;
     }
 
     @Override
     public Set<Variable> getUsed() {
-        return IRCommand.extractVars(Set.of(a, b));
+        Set<Argument> set = new HashSet<>();
+        set.add(a);
+        set.add(b);
+        return IRCommand.extractVars(set);
     }
 
     @Override
@@ -287,7 +294,7 @@ class BinaryOperatorCommand extends IRCommand {
 
     @Override
     public String toString() {
-        return op.getValue() + " " + a + ", " + b + ", " + dest;
+        return op.getValue() + ", " + a + ", " + b + ", " + dest;
     }
 
 
@@ -311,6 +318,14 @@ class CallCommand extends IRCommand {
     @Override
     public Set<Variable> getDecl() {
         return Set.of();
+    }
+
+    public String getFunc() {
+        return func;
+    }
+
+    public List<Argument> getArgs() {
+        return args;
     }
 
     @Override
@@ -340,30 +355,25 @@ class CallCommand extends IRCommand {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(func).append("( ");
+        builder.append("call, ").append(func);
         for(Argument arg: args)
-            builder.append(arg).append(" ");
-        builder.append(")");
+            builder.append(", ").append(arg);
         return builder.toString();
     }
 
 }
 
-class CallRCommand extends IRCommand {
+class CallRCommand extends CallCommand {
     private final Argument var;
-    private final List<Argument> args;
-    private final String func;
     private BasicBlocks.Block block;
 
     public CallRCommand(Argument var, String func, List<Argument> args) {
+        super(func, args);
         this.var = var;
-        this.func = func;
-        this.args = args;
     }
 
-    @Override
-    public Set<Variable> getUsed() {
-        return extractVars(new HashSet<>(args));
+    public Argument getVar() {
+        return var;
     }
 
     @Override
@@ -383,24 +393,27 @@ class CallRCommand extends IRCommand {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
         CallRCommand that = (CallRCommand) o;
-        return Objects.equals(var, that.var) && Objects.equals(func, that.func) && Objects.equals(block, that.block);
+        return Objects.equals(var, that.var) && Objects.equals(block, that.block);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(var, func, block);
+        return Objects.hash(super.hashCode(), var, block);
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(var).append(" = ").append(func).append("( ");
-        for(Argument arg: args)
-            builder.append(arg).append(" ");
-        builder.append(")");
+        builder.append("callr, ").append(var).append(", ").append(getFunc());
+        for(Argument arg: getArgs())
+            builder.append(", ").append(arg);
         return builder.toString();
     }
 }
@@ -464,7 +477,7 @@ class ArrayLoadCommand extends IRCommand {
 
     @Override
     public String toString() {
-        return var + " = " +  arr+ "[" + index + "] ";
+        return "array_load, " + var + ", " +  arr+ ", " + index;
     }
 }
 
@@ -529,7 +542,7 @@ class ArrayStoreCommand extends IRCommand {
 
     @Override
     public String toString() {
-        return arr+ "[" + index + "] " + " = " + value;
+        return "array_store, " + arr+ ", " + index + ", " + value;
     }
 }
 
@@ -569,6 +582,8 @@ class AssignmentCommand extends IRCommand {
 
     @Override
     public Set<Variable> getDecl() {
+        if(size != 0 || var instanceof Array)
+            return Set.of();
         return extractVars(Set.of(var));
     }
 
@@ -597,8 +612,7 @@ class AssignmentCommand extends IRCommand {
 
     @Override
     public String toString() {
-        return var + " = " +
-                 " (size)" + size + ", " + value;
+        return "assign, " +  var + (size == 0?  "" :  ", " + size) + ", " + value;
     }
 
 }

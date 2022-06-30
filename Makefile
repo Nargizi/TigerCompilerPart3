@@ -1,9 +1,9 @@
-ANTLR := /Users/Andria/Desktop/Uni_Stuff/Compilers/ANTLR-4.9.3/antlr-4.9.3-complete.jar
+ANTLR := /usr/local/lib/antlr4-4.9.4-SNAPSHOT-complete.jar
 GRAMMAR := IR.g4
 MAIN_CLASS_NAME := Main
 JAR_DIR := cs8803_bin
 BUILD_DIR := build
-COMPILER_JAR := irc.jar
+COMPILER_JAR := tigerc.jar
 
 ANTLR_JAVA_FILES := \
 src/IRBaseListener.java \

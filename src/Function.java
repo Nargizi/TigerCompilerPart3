@@ -9,12 +9,14 @@ public class Function {
 
     // memory for functions
     private final Stack localMemory;
+    private final Stack argumentMemory;
     private final RegisterMemory intArgumentMemory;
     private final RegisterMemory floatArgumentMemory;
 
     private final Map<IRCommand, Integer> commandMap;
     private List<IRCommand> commandList;
     private final BasicBlocks controlFlowGraph;
+    private int maxArgumentSize;
 
 
     // predefined registers
@@ -29,9 +31,11 @@ public class Function {
     public Function(String name) {
         this.funcName = name;
         this.currClass = null;
+        this.maxArgumentSize = 4 * 4 + 2 * 8; // 4 int argument register + 2 float argument register
 
         // memory initialization
-        this.localMemory = new Stack(new Register("sp", Type.Integer));
+        this.localMemory = new Stack(new Register("sp", Type.Integer), true);
+        this.argumentMemory = new Stack(new Register("fp", Type.Integer), false);
         this.intArgumentMemory = new RegisterMemory(intArgumentRegisters);
         this.floatArgumentMemory = new RegisterMemory(floatArgumentRegisters);
 
@@ -51,15 +55,27 @@ public class Function {
 
     public void addArgument(Variable v) {
         if (v.getType().equals(Type.Integer)){
-            if(!intArgumentMemory.declareVariable(v))
-                localMemory.declareVariable(v);
+            intArgumentMemory.declareVariable(v);
         } else {
-            if(!floatArgumentMemory.declareVariable(v))
-                localMemory.declareVariable(v);
+            floatArgumentMemory.declareVariable(v);
         }
+        argumentMemory.declareVariable(v);
     }
 
     public void addCommand(IRCommand c){
+        if (c instanceof CallCommand){
+            int size = 0;
+            for(var arg: ((CallCommand) c).getArgs()){
+                size += arg.getType().getSize();
+            }
+            maxArgumentSize = Math.max(maxArgumentSize, size);
+        } else if (c instanceof CallRCommand){
+            int size = 0;
+            for(var arg: ((CallRCommand) c).getArgs()){
+                size += arg.getType().getSize();
+            }
+            maxArgumentSize = Math.max(maxArgumentSize, size);
+        }
         c.setBlock(controlFlowGraph.getCurrentBlock());
         commandList.add(c);
         commandMap.put(c, commandMap.size());
@@ -86,13 +102,33 @@ public class Function {
         return commandList.get(i);
     }
 
-    public Address getAddress(Variable arg){
-        Address add;
-        add = localMemory.getAddress(arg);
+    public int getMaxArgumentSize() {
+        return maxArgumentSize;
+    }
+
+    public int getLocalMemorySize() {
+        return localMemory.getSize();
+    }
+
+    public Address getLocalAddress(Variable arg){
+        Address add =localMemory.getAddress(arg);
+        if(add != null)
+            add = new Address(add.getStart(), add.getOffset() + getMaxArgumentSize());
+
+        if(add == null)
+            arg = argumentMemory.getAddress(arg);
+        return add;
+    }
+
+    public DataAddress getGlobalAddress(Variable arg){
         // search for variable address in static memory
-        if(add == null && currClass != null){
-            add = currClass.getAddress(arg);
-        }
+        return currClass.getAddress(arg);
+    }
+
+    public Register getAddress(Variable arg){
+        Address add = getLocalAddress(arg);
+        if(add == null)
+            return getGlobalAddress(arg);
         return add;
     }
 
@@ -105,16 +141,11 @@ public class Function {
     public Argument getVariable(String name){
         Argument arg = localMemory.getVariable(name);
         if (arg == null)
-            arg = floatArgumentMemory.getVariable(name);
-        if (arg == null)
-            arg = intArgumentMemory.getVariable(name);
+            arg = argumentMemory.getVariable(name);
         if (arg == null)
             arg = currClass.getVariable(name);
         if (arg == null)
-            if (name.contains("."))
-                arg = new Constant(name, Type.Float);
-            else
-                arg = new Constant(name, Type.Integer);
+            arg = new Constant(name);
         return arg;
     }
 
@@ -148,6 +179,4 @@ public class Function {
 
         return Set.of(commandMap.get(curr) + 1);
     }
-
-
 }

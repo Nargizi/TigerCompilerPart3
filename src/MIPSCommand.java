@@ -1,3 +1,5 @@
+import java.util.List;
+
 public abstract class MIPSCommand {
 
 
@@ -6,17 +8,19 @@ public abstract class MIPSCommand {
 class BinaryMIPSCommand extends MIPSCommand{
     private Register dest, a, b;
     private BinaryOperator op;
+    private boolean isFloat;
 
-    public BinaryMIPSCommand(Register dest, Register a, Register b, BinaryOperator op) {
+    public BinaryMIPSCommand(Register dest, Register a, Register b, BinaryOperator op, boolean isFloat) {
         this.dest = dest;
         this.a = a;
         this.b = b;
         this.op = op;
+        this.isFloat = isFloat;
     }
 
     @Override
     public String toString() {
-        return op.toString().toLowerCase() + " " + dest + ", " + a + ", " + b;
+        return "\t\t" + op.toString().toLowerCase() + ( isFloat ? ".s " : " ") + dest + ", " + a + ", " + b;
     }
 }
 
@@ -34,16 +38,16 @@ class BinaryImmediateMIPSCommand extends MIPSCommand{
 
     @Override
     public String toString() {
-        return op.toString().toLowerCase() + "i" + " " + dest + ", " + a + ", " + b;
+        return "\t\t" +  op.toString().toLowerCase() + "iu" + " " + dest + ", " + a + ", " + b;
     }
 }
 
 class LoadMIPSCommand extends MIPSCommand {
     private Register dest;
-    private Address origin;
+    private Variable origin;
     private boolean isFloat;
 
-    public LoadMIPSCommand(Register dest, Address origin, boolean isFloat) {
+    public LoadMIPSCommand(Register dest, Variable origin, boolean isFloat) {
         this.dest = dest;
         this.origin = origin;
         this.isFloat = isFloat;
@@ -51,16 +55,16 @@ class LoadMIPSCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "l" + (isFloat ? ".s" : "w") + " " + dest + ", " + origin;
+        return "\t\t" +  "l" + (isFloat ? ".s" : "w") + " " + dest + ", " + origin;
     }
 }
 
 class StoreMIPSCommand extends MIPSCommand {
     private Register origin;
-    private Address dest;
+    private Register dest;
     private boolean isFloat;
 
-    public StoreMIPSCommand(Register origin, Address dest, boolean isFloat) {
+    public StoreMIPSCommand(Register origin, Register dest, boolean isFloat) {
         this.origin = origin;
         this.dest = dest;
         this.isFloat = isFloat;
@@ -68,7 +72,7 @@ class StoreMIPSCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "s" + (isFloat ? ".s" : "w") + " " + origin + ", " + dest;
+        return "\t\t" +  "s" + (isFloat ? ".s" : "w") + " " + origin + ", " + dest;
     }
 }
 
@@ -103,7 +107,7 @@ class JumpMIPSCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "j " + label;
+        return "\t\t" +  "j " + label;
     }
 }
 
@@ -120,7 +124,7 @@ class ReturnMIPSCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "jr" + addr;
+        return "\t\t" +  "jr " + addr;
     }
 }
 
@@ -133,7 +137,7 @@ class CallMIPSCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "jal " + label;
+        return "\t\t" +  "jal " + label;
     }
 }
 
@@ -148,7 +152,7 @@ class LoadIntCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "li " + dest + " " + constant;
+        return "\t\t" +  "li " + dest + " " + constant;
     }
 }
 
@@ -163,7 +167,7 @@ class LoadFloatCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "li.s " + dest + " " + constant;
+        return "\t\t" +  "li.s " + dest + " " + constant;
     }
 }
 
@@ -177,7 +181,7 @@ class MoveMIPSCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "move " + a + ", " + b;
+        return "\t\t" +  "move " + a + ", " + b;
     }
 
 }
@@ -191,7 +195,7 @@ class LabelMIPSCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return label + ":";
+        return "\t\t" +  label + ":";
     }
 }
 
@@ -205,7 +209,7 @@ class IntToFloatCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "cvt.s.w " + floatRegister + ", " + intRegister;
+        return "\t\t" +  "cvt.s.w " + floatRegister + ", " + intRegister;
     }
 }
 
@@ -219,7 +223,73 @@ class FloatToIntCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "cvt.w.s " + intRegister + ", " + floatRegister;
+        return "\t\t" +  "cvt.w.s " + intRegister + ", " + floatRegister;
+    }
+}
+
+class DataTypeMIPSCommand extends MIPSCommand{
+    private String name, type, initializer;
+
+    public DataTypeMIPSCommand(String name, String type, String initializer) {
+        this.name = name;
+
+        this.type = type;
+        this.initializer = initializer;
+    }
+
+    public DataTypeMIPSCommand(String name, String type) {
+        this(name, type, "");
+    }
+
+    @Override
+    public String toString(){
+        return name + ":  ." + type + "  " + initializer ;
+    }
+
+}
+
+class CommentMIPSCommand extends MIPSCommand{
+    private String comment;
+
+    public CommentMIPSCommand(String comment) {
+        this.comment = comment;
+    }
+
+    @Override
+    public String toString(){
+        return "#" + comment;
+    }
+}
+
+class AssemblerDirectiveCommand extends MIPSCommand {
+    private String directive;
+    private List<String> arguments;
+
+    public AssemblerDirectiveCommand(String directive, List<String> arguments) {
+        this.directive = directive;
+        this.arguments = arguments;
+    }
+
+    public AssemblerDirectiveCommand(String directive) {
+        this(directive, List.of());
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append('.').append(directive).append(" ");
+        for(var arg: arguments){
+            builder.append(arg).append(" ");
+        }
+        return builder.toString();
+    }
+
+}
+
+class SystemMIPSCommand extends  MIPSCommand {
+    @Override
+    public String toString() {
+        return "syscall";
     }
 }
 
