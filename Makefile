@@ -56,3 +56,4 @@ $(ANTLR_LIBS):
 clean:
 	@rm -f $(JAR_DIR)/$(COMPILER_JAR) $(ANTLR_FILES) $(BUILD_DIR)/*.class
 	@rm -rf $(ANTLR_LIBS)
+
