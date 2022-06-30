@@ -1,7 +1,6 @@
 grammar IR;
 
 
-// TODO: arrays
 program: START_PROGRAM ID static_int_list static_float_list function* END_PROGRAM ID;
 START_PROGRAM: 'start_program';
 END_PROGRAM: 'end_program';
