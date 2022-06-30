@@ -20,7 +20,7 @@ public class Main {
         writer.flush();
     }
 
-    public static void compile(File file, boolean graphViz, boolean liveness, boolean naive, boolean cfg, boolean briggs) throws IOException {
+    public static void compile(File file, File tiger_file, boolean graphViz, boolean liveness, boolean naive, boolean cfg, boolean briggs) throws IOException {
         CharStream codePointCharStream = CharStreams.fromPath(Path.of(file.getAbsolutePath()));
         IRLexer lexer = new IRLexer(codePointCharStream);
         IRParser parser = new IRParser(new CommonTokenStream(lexer));
@@ -29,9 +29,9 @@ public class Main {
         Tree t = new Tree();
         walker.walk(t, tree);
         Class c = t.getCurrClass();
-        String fileName = file.getName();
-        fileName = fileName.substring(0, fileName.lastIndexOf("ir"));
-        File folder = file.getParentFile();
+        String fileName = tiger_file.getName();
+        fileName = fileName.substring(0, fileName.lastIndexOf("tiger"));
+        File folder = tiger_file.getParentFile();
 
         if(cfg) {
             CFGAllocator allocator = new CFGAllocator();
@@ -67,12 +67,15 @@ public class Main {
 
 
     public static void main(String[] args) throws IOException {
-        String ir_source = null;
+        String ir_source = null, tiger_source = null;
         boolean naive = false, briggs = false, cfg = false;
         boolean graphViz = false, liveness = false;
         for(int i = 0; i < args.length; ++i){
             if(args[i].equals("-r")){
                 ir_source = args[i + 1];
+            }
+            if(args[i].equals("-i")){
+                tiger_source = args[i + 1];
             }
             if(args[i].equals("--cfg")){
                 graphViz = true;
@@ -93,6 +96,6 @@ public class Main {
         if (ir_source == null){
             // TODO ERROR
         }
-        compile(new File(ir_source), graphViz, liveness, naive, cfg, briggs);
+        compile(new File(ir_source), new File(tiger_source) , graphViz, liveness, naive, cfg, briggs);
     }
 }
