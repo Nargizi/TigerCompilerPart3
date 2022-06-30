@@ -1,4 +1,4 @@
-ANTLR := /Users/nargizi/Desktop/uni/Compilers/ANTLR-4.9.3/antlr-4.9.3-complete.jar
+ANTLR := /usr/local/lib/antlr4-4.9.4-SNAPSHOT-complete.jar
 GRAMMAR := IR.g4
 MAIN_CLASS_NAME := Main
 JAR_DIR := cs8803_bin
@@ -56,4 +56,3 @@ $(ANTLR_LIBS):
 clean:
 	@rm -f $(JAR_DIR)/$(COMPILER_JAR) $(ANTLR_FILES) $(BUILD_DIR)/*.class
 	@rm -rf $(ANTLR_LIBS)
-
