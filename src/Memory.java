@@ -96,6 +96,8 @@ class Stack implements Memory {
         // last element is always at the start of the stack (meaning at address $sp(0))
         // instead of top of the stack, like in most programming languages (including java)
         // so here i am trying to mimic stack pointer behaviour by reversing object indices
+        if(!stored.containsKey(var))
+            return null;
         try {
             return getAddress(stored.get(var), var.getSize());
         } catch (NullPointerException e){

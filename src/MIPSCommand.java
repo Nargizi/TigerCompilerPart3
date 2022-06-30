@@ -173,15 +173,17 @@ class LoadFloatCommand extends MIPSCommand {
 
 class MoveMIPSCommand extends MIPSCommand {
     private Register a, b;
+    private boolean isFloat;
 
-    public MoveMIPSCommand(Register a, Register b) {
+    public MoveMIPSCommand(Register a, Register b, boolean isFloat) {
         this.a = a;
         this.b = b;
+        this.isFloat = isFloat;
     }
 
     @Override
     public String toString() {
-        return "\t\t" +  "move " + a + ", " + b;
+        return "\t\t" +  "mov" +  (isFloat ? ".s ": "e ") + a + ", " + b;
     }
 
 }

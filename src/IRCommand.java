@@ -202,7 +202,8 @@ enum BinaryOperator {
     MUL("mult"),
     DIV("div"),
     AND("and"),
-    OR("or");
+    OR("or"),
+    NOR("nor");
 
     public final String value;
     private static final Map<String, BinaryOperator> lookup = new HashMap<String, BinaryOperator>();

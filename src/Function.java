@@ -50,7 +50,8 @@ public class Function {
     }
 
     public void addLocalVar(Variable v){
-        localMemory.declareVariable(v);
+        if(argumentMemory.getAddress(v) == null)
+            localMemory.declareVariable(v);
     }
 
     public void addArgument(Variable v) {
@@ -111,12 +112,11 @@ public class Function {
     }
 
     public Address getLocalAddress(Variable arg){
-        Address add =localMemory.getAddress(arg);
+        Address add = localMemory.getAddress(arg);
         if(add != null)
             add = new Address(add.getStart(), add.getOffset() + getMaxArgumentSize());
-
-        if(add == null)
-            arg = argumentMemory.getAddress(arg);
+        else
+            add = argumentMemory.getAddress(arg);
         return add;
     }
 
