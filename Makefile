@@ -1,4 +1,4 @@
-ANTLR := antlr-4.9.3-complete.jar
+ANTLR := /Users/nargizi/Desktop/uni/Compilers/ANTLR-4.9.3/antlr-4.9.3-complete.jar
 GRAMMAR := IR.g4
 MAIN_CLASS_NAME := Main
 JAR_DIR := cs8803_bin
