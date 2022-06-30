@@ -1,4 +1,4 @@
-ANTLR := /usr/local/lib/antlr4-4.9.4-SNAPSHOT-complete.jar
+ANTLR := antlr-4.9.3-complete.jar
 GRAMMAR := IR.g4
 MAIN_CLASS_NAME := Main
 JAR_DIR := cs8803_bin
