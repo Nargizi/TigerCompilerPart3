@@ -1,24 +1,33 @@
-start_program function_call_void_ret
-    static-int-list:
+start_program basic_scope_nested
+    static-int-list: _0_a
     static-float-list:
-
-start_function printSquare
-    void printSquare(int _1_x)
-    int-list: _1_x, _t1
-    float-list:
-    printSquare:
-    mult, _1_x, _1_x, _t1
-    call, printi, _t1
-    return, , ,
-end_function printSquare
 
 start_function main
     int main()
-    int-list:
+    int-list: _2_b, _t1, _3_c, _t2, _t3, _4_d, _t4, _t5, _t6
     float-list:
     main:
-    call, printSquare, 25
+    assign, _0_a, 10,
+    add, _0_a, 1, _t1
+    assign, _0_a, _t1,
+    assign, _2_b, 20,
+    add, _0_a, 1, _t2
+    assign, _0_a, _t2,
+    add, _2_b, 1, _t3
+    assign, _2_b, _t3,
+    assign, _3_c, 30,
+    add, _0_a, 1, _t4
+    assign, _0_a, _t4,
+    add, _2_b, 1, _t5
+    assign, _2_b, _t5,
+    add, _3_c, 1, _t6
+    assign, _3_c, _t6,
+    assign, _4_d, 40,
+    call, printi, _4_d
+    call, printi, _3_c
+    call, printi, _2_b
+    call, printi, _0_a
     return, 0, ,
 end_function main
 
-end_program function_call_void_ret
+end_program basic_scope_nested

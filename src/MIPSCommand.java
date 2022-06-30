@@ -80,34 +80,57 @@ class StoreMIPSCommand extends MIPSCommand {
 class BranchMIPSCommand extends MIPSCommand {
     private Register a, b;
     private String label, op;
-    public final static Map<String, String> intMAP = new HashMap<>();
+    private final static Map<String, String> INT_MAP = new HashMap<>();
     static{
-        intMAP.put("brneq", "bne");
-        intMAP.put("breq", "beq");
-        intMAP.put("brgt", "bgt");
-        intMAP.put("brgeq", "bge");
-        intMAP.put("brlt", "blt");
-        intMAP.put("brleq", "ble");
+        INT_MAP.put("brneq", "bne");
+        INT_MAP.put("breq", "beq");
+        INT_MAP.put("brgt", "bgt");
+        INT_MAP.put("brgeq", "bge");
+        INT_MAP.put("brlt", "blt");
+        INT_MAP.put("brleq", "ble");
     }
 
     public BranchMIPSCommand(Register a, Register b, String label, String op) {
         this.a = a;
         this.b = b;
         this.label = label;
-        this.op = op;
+        this.op = INT_MAP.get(op);
     }
 
     @Override
     public String toString() {
-        if (a.getType().equals(Type.Float))
-            // TODO: we need to discuss this
-            return "";
-        else
-            return op + " " + a + ", " + b + ", " + label;
+        return op + " " + a + ", " + b + ", " + label;
     }
 
 }
 
+class FloatBranchMIPSCommand extends MIPSCommand{
+    private Register a, b;
+    private List<String> ops;
+    private String label;
+
+    private final static Map<String, List<String>> STRING_MAP = new HashMap<>();
+    static{
+        STRING_MAP.put("brneq", List.of("c.eq.s", "bc1f"));
+        STRING_MAP.put("breq", List.of("c.eq.s", "bc1t"));
+        STRING_MAP.put("brgt", List.of("c.le.s", "bc1f"));
+        STRING_MAP.put("brgeq", List.of("c.lt.s", "bc1f"));
+        STRING_MAP.put("brlt", List.of("c.lt.s", "bc1t"));
+        STRING_MAP.put("brleq", List.of("c.le.s", "bc1t"));
+    }
+
+    public FloatBranchMIPSCommand(Register a, Register b, String label, String op) {
+        this.a = a;
+        this.b = b;
+        this.label = label;
+        this.ops = STRING_MAP.get(op);
+    }
+    @Override
+    public String toString() {
+        return ops.get(0) + " " + a + ", " + b + "\n" + ops.get(1) + " " + label;
+    }
+
+}
 
 class JumpMIPSCommand extends MIPSCommand {
     private String label;
@@ -263,10 +286,6 @@ class DataTypeMIPSCommand extends MIPSCommand{
 
         this.type = type;
         this.initializer = initializer;
-    }
-
-    public DataTypeMIPSCommand(String name, String type) {
-        this(name, type, "");
     }
 
     @Override
