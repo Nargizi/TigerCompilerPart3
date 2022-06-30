@@ -383,6 +383,11 @@ class CallRCommand extends CallCommand {
     }
 
     @Override
+    public Set<Variable> getUsed() {
+        return Set.of();
+    }
+
+    @Override
     public BasicBlocks.Block getBlock() {
         return block;
     }
@@ -445,7 +450,7 @@ class ArrayLoadCommand extends IRCommand {
 
     @Override
     public Set<Variable> getUsed() {
-        return Set.of();
+        return extractVars(Set.of(index));
     }
 
     @Override

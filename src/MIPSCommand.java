@@ -260,7 +260,7 @@ class IntToFloatCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "\t\t" +  "cvt.s.w " + floatRegister + ", " + intRegister;
+        return new MoveToFloatCommand(intRegister, floatRegister) + "\n" + "\t\t" +  "cvt.s.w " + floatRegister + ", " + floatRegister;
     }
 }
 
@@ -274,7 +274,35 @@ class FloatToIntCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "\t\t" +  "cvt.w.s " + intRegister + ", " + floatRegister;
+        return "\t\t" +  "cvt.w.s " + floatRegister + ", " + floatRegister + "\n" + new MoveFromFloatCommand(intRegister, floatRegister);
+    }
+}
+
+class MoveToFloatCommand extends MIPSCommand {
+    private Register intRegister, floatRegister;
+
+    public MoveToFloatCommand(Register intRegister, Register floatRegister) {
+        this.intRegister = intRegister;
+        this.floatRegister = floatRegister;
+    }
+
+    @Override
+    public String toString() {
+        return "\t\t" +  "mtc1 " + intRegister + ", " + floatRegister;
+    }
+}
+
+class MoveFromFloatCommand extends MIPSCommand {
+    private Register intRegister, floatRegister;
+
+    public MoveFromFloatCommand(Register intRegister, Register floatRegister) {
+        this.intRegister = intRegister;
+        this.floatRegister = floatRegister;
+    }
+
+    @Override
+    public String toString() {
+        return "\t\t" +  "mfc1 " + intRegister + ", " + floatRegister;
     }
 }
 

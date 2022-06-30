@@ -111,6 +111,14 @@ public class Function {
         return localMemory.getSize();
     }
 
+    public Map<Variable, Register> getFloatArguments(){
+        return floatArgumentMemory.getAllAddress();
+    }
+
+    public Map<Variable, Register> getIntArguments(){
+        return intArgumentMemory.getAllAddress();
+    }
+
     public Address getLocalAddress(Variable arg){
         Address add = localMemory.getAddress(arg);
         if(add != null)
@@ -129,6 +137,7 @@ public class Function {
         Address add = getLocalAddress(arg);
         if(add == null)
             return getGlobalAddress(arg);
+//        System.out.println(arg + " : " + add);
         return add;
     }
 

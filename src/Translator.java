@@ -175,9 +175,9 @@ public class Translator {
         if(command instanceof ReturnCommand)
             return translateReturnCommand((ReturnCommand) command, f);
         if(command instanceof CallRCommand)
-            return translateCallRCommand((CallRCommand) command);
+            return translateCallRCommand((CallRCommand) command, f);
         if(command instanceof CallCommand)
-            return translateCallCommand((CallCommand) command);
+            return translateCallCommand((CallCommand) command, f);
         if(command instanceof ArrayStoreCommand)
             return translateArrayStoreCommand((ArrayStoreCommand) command);
         if(command instanceof ArrayLoadCommand)
@@ -187,8 +187,8 @@ public class Translator {
 
     private List<MIPSCommand> translateJumpCommand(GotoCommand command){
         List<MIPSCommand> commandList = new LinkedList<>(registerAllocator.enterCommand(command));
-        commandList.add(new JumpMIPSCommand(command.getLabel()));
         commandList.addAll(registerAllocator.exitCommand(command));
+        commandList.add(new JumpMIPSCommand(command.getLabel()));
         return commandList;
     }
 
@@ -232,7 +232,7 @@ public class Translator {
             Register sizeVar = load(tempSizeVar);
             commandList.add(new LoadIntCommand(sizeVar, new Constant("4")));
             commandList.add(new BinaryMIPSCommand(index, index, sizeVar, BinaryOperator.MUL, false)); // index = index * 4
-            commandList.add(new BinaryMIPSCommand(index, index, arrayAddress.getStart(), BinaryOperator.ADD,true)); // index = base + index
+            commandList.add(new BinaryMIPSCommand(index, index, arrayAddress.getStart(), BinaryOperator.ADD,false)); // index = base + index
             arrayAddress = new Address(index, arrayAddress.getOffset());
         }
 
@@ -295,6 +295,7 @@ public class Translator {
             arrayAddress = new Address(arrayAddress.getStart(), index * array.getType().getSize() + arrayAddress.getOffset());
         } else {
             Register index = registerAllocator.getRegister((Variable) command.getIndex());
+//            System.out.println(command + " " + command.getIndex());
             if(index.getType().equals(Type.Float)){
                 tempIndexVar = getTempVariable(Type.Integer);
                 Register tempReg = load(tempIndexVar);
@@ -387,7 +388,7 @@ public class Translator {
 
         Array a = (Array)command.getVar();
         Array b = (Array)command.getValue();
-        int size = a.getSize();
+        int size = a.getSize() / a.getType().getSize();
         Address aBaseAddress = registerAllocator.func.getLocalAddress(a);
         Address bBaseAddress = registerAllocator.func.getLocalAddress(b);
 
@@ -507,7 +508,7 @@ public class Translator {
 
 
 
-    private List<MIPSCommand> functionCall(CallCommand command) {
+    private List<MIPSCommand> functionCall(CallCommand command, Function f) {
         List<MIPSCommand> commandList = new LinkedList<>(registerAllocator.enterCommand(command));
         int offset = 0, numInt = 0, numFloat = 0;
         for(int i = 0; i < command.getArgs().size(); ++i){
@@ -522,8 +523,10 @@ public class Translator {
             }else {
                 arg = (Variable) command.getArgs().get(i);
                 r = registerAllocator.getRegister(arg);
-                if(r == null)
+                if(r == null) {
                     r = load(arg);
+                    commandList.add(new LoadMIPSCommand(r, f.getAddress(arg), r.getType().equals(Type.Float)));
+                }
             }
 
             commandList.add(new StoreMIPSCommand(r, new Address(SP, offset), arg.getType().equals(Type.Float)));
@@ -540,9 +543,15 @@ public class Translator {
             case "printi" -> {
                 commandList.add(new LoadIntCommand(RETURN_INT, new Constant("1")));
                 commandList.add(new SystemMIPSCommand());
+                commandList.add(new LoadIntCommand(RETURN_INT, new Constant("11")));
+                commandList.add(new LoadIntCommand(new Register("a0", Type.Integer), new Constant("10")));
+                commandList.add(new SystemMIPSCommand());
             }
             case "printf" -> {
                 commandList.add(new LoadIntCommand(RETURN_INT, new Constant("2")));
+                commandList.add(new SystemMIPSCommand());
+                commandList.add(new LoadIntCommand(RETURN_INT, new Constant("11")));
+                commandList.add(new LoadIntCommand(new Register("a0", Type.Integer), new Constant("10")));
                 commandList.add(new SystemMIPSCommand());
             }
             case "exit" -> {
@@ -557,15 +566,17 @@ public class Translator {
         }
         return commandList;
     }
-    private List<MIPSCommand> translateCallCommand(CallCommand command){
-        List<MIPSCommand> commandList =  functionCall(command);
+    private List<MIPSCommand> translateCallCommand(CallCommand command, Function f){
+        List<MIPSCommand> commandList =  functionCall(command, f);
+        commandList.addAll(functionExit(f));
         commandList.addAll(registerAllocator.exitCommand(command));
         return commandList;
     }
 
-    private List<MIPSCommand> translateCallRCommand(CallRCommand command){
-        List<MIPSCommand> commandList = functionCall(command);
+    private List<MIPSCommand> translateCallRCommand(CallRCommand command, Function f){
+        List<MIPSCommand> commandList = functionCall(command, f);
         Variable var = (Variable) command.getVar();
+        commandList.addAll(functionExit(f));
         if(var.getType().equals(Type.Float))
             commandList.add(new MoveMIPSCommand(registerAllocator.getRegister(var), RETURN_FLOAT, true));
         else
@@ -574,8 +585,20 @@ public class Translator {
         return commandList;
     }
 
-    // TODO: float type operations
-    // TODO: float branching a need different MIPS command
+    private List<MIPSCommand> functionExit(Function f){
+        List<MIPSCommand> commandList = new LinkedList<>();
+        var intArguments = f.getIntArguments();
+        var floatArguments = f.getFloatArguments();
+        for(var arg: intArguments.entrySet()){
+            commandList.add(new LoadMIPSCommand(arg.getValue(), f.getLocalAddress(arg.getKey()), false));
+        }
+        for(var arg: floatArguments.entrySet()){
+            commandList.add(new LoadMIPSCommand(arg.getValue(), f.getLocalAddress(arg.getKey()), true));
+        }
+        return commandList;
+    }
+
+
     private List<MIPSCommand> translateBranchCommand(ConditionalBranchCommand command){
         List<MIPSCommand> commandList = new LinkedList<>(registerAllocator.enterCommand(command));
 
@@ -635,6 +658,7 @@ public class Translator {
         Register a, b;
         Variable aTempVar = null;
 
+
         if (aVar instanceof Constant) {
             aTempVar = getTempVariable(aVar.getType());
             a = load(aTempVar);
@@ -667,6 +691,7 @@ public class Translator {
             commandList.add(dest.getType().equals(Type.Float) ?
                                     new IntToFloatCommand(aConTempReg, a) :
                                     new FloatToIntCommand(aConTempReg, a));
+            a = aConTempReg;
         }
         if(!b.getType().equals(dest.getType())){
             Variable bConTempVar = getTempVariable(dest.getType());
@@ -674,6 +699,7 @@ public class Translator {
             commandList.add(dest.getType().equals(Type.Float) ?
                                     new IntToFloatCommand(bConTempReg, b) :
                                     new FloatToIntCommand(bConTempReg, b));
+            b = bConTempReg;
             store(bConTempVar);
         }
 

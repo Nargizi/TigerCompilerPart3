@@ -1,33 +1,15 @@
-start_program basic_scope_nested
-    static-int-list: _0_a
+start_program demo_prng
+    static-int-list: _0_size
     static-float-list:
 
 start_function main
     int main()
-    int-list: _2_b, _t1, _3_c, _t2, _t3, _4_d, _t4, _t5, _t6
+    int-list:
     float-list:
     main:
-    assign, _0_a, 10,
-    add, _0_a, 1, _t1
-    assign, _0_a, _t1,
-    assign, _2_b, 20,
-    add, _0_a, 1, _t2
-    assign, _0_a, _t2,
-    add, _2_b, 1, _t3
-    assign, _2_b, _t3,
-    assign, _3_c, 30,
-    add, _0_a, 1, _t4
-    assign, _0_a, _t4,
-    add, _2_b, 1, _t5
-    assign, _2_b, _t5,
-    add, _3_c, 1, _t6
-    assign, _3_c, _t6,
-    assign, _4_d, 40,
-    call, printi, _4_d
-    call, printi, _3_c
-    call, printi, _2_b
-    call, printi, _0_a
+    call, printi, 17
+    call, printi, 18
     return, 0, ,
 end_function main
 
-end_program basic_scope_nested
+end_program demo_prng

@@ -96,16 +96,19 @@ class NaiveAllocator extends RegisterAllocator {
         List<MIPSCommand> commandList = new ArrayList<>();
         Set<Variable> decl = command.getDecl();
         Set<Variable> used = command.getUsed();
-
-        for(Variable var: decl){
-            load(var);
-        }
-
+//        System.out.println("ENTER START: " + savedFloatRegisterMemory.getNumFree());
         for(Variable var: used) {
+            if (inRegister(var)) continue;
             load(var);
             commandList.add(loadCommand(getRegister(var), func.getAddress(var), var.getType().equals(Type.Float)));
         }
 
+        for(Variable var: decl){
+            if (inRegister(var)) continue;
+//            System.out.println(var + " : " + load(var));
+            load(var);
+        }
+//        System.out.println("ENTER END: " + savedFloatRegisterMemory.getNumFree());
         return commandList;
     }
 
@@ -115,6 +118,7 @@ class NaiveAllocator extends RegisterAllocator {
         List<MIPSCommand> commandList = new ArrayList<>();
         Set<Variable> decl = command.getDecl();
         Set<Variable> used = command.getUsed();
+//        System.out.println("EXIT START: " + savedFloatRegisterMemory.getNumFree());
 
         for(Variable var: decl){
             commandList.add(storeCommand(getRegister(var), func.getAddress(var), var.getType().equals(Type.Float)));
@@ -125,6 +129,7 @@ class NaiveAllocator extends RegisterAllocator {
             store(var);
         }
 
+//    System.out.println("EXIT END: " + savedFloatRegisterMemory.getNumFree());
         return commandList;
     }
 }
@@ -187,13 +192,15 @@ class CFGAllocator extends RegisterAllocator {
         decl.removeAll(currStored);
         used.removeAll(currStored);
 
-        for(Variable var: decl){
-            load(var);
-        }
-
         for(Variable var: used) {
+            if (inRegister(var)) continue;
             load(var);
             commandList.add(loadCommand(getRegister(var), func.getAddress(var), var.getType().equals(Type.Float)));
+        }
+
+        for(Variable var: decl){
+            if (inRegister(var)) continue;
+            load(var);
         }
 
         return commandList;
