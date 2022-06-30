@@ -36,17 +36,17 @@ public class Main {
         if(cfg) {
             CFGAllocator allocator = new CFGAllocator();
             Translator translator = new Translator(allocator);
-            toFile(Path.of(folder.getAbsolutePath(), fileName + "ib.s").toString(), translator.translate(c));
+            toFile(Path.of(folder.getAbsolutePath(), fileName + "s").toString(), translator.translate(c));
         }
         if(naive || !(cfg || briggs)) {
             NaiveAllocator allocator = new NaiveAllocator();
             Translator translator = new Translator(allocator);
-            toFile(Path.of(folder.getAbsolutePath(), fileName + "naive.s").toString(), translator.translate(c));
+            toFile(Path.of(folder.getAbsolutePath(), fileName + "s").toString(), translator.translate(c));
         }
         if(briggs) {
             BriggsAllocator allocator = new BriggsAllocator();
             Translator translator = new Translator(allocator);
-            toFile(Path.of(folder.getAbsolutePath(), fileName + "briggs.s").toString(), translator.translate(c));
+            toFile(Path.of(folder.getAbsolutePath(), fileName + "s").toString(), translator.translate(c));
         }
 
 
