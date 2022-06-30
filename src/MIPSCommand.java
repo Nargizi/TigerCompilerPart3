@@ -1,4 +1,6 @@
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class MIPSCommand {
 
@@ -75,10 +77,18 @@ class StoreMIPSCommand extends MIPSCommand {
         return "\t\t" +  "s" + (isFloat ? ".s" : "w") + " " + origin + ", " + dest;
     }
 }
-
 class BranchMIPSCommand extends MIPSCommand {
     private Register a, b;
     private String label, op;
+    public final static Map<String, String> intMAP = new HashMap<>();
+    static{
+        intMAP.put("brneq", "bne");
+        intMAP.put("breq", "beq");
+        intMAP.put("brgt", "bgt");
+        intMAP.put("brgeq", "bge");
+        intMAP.put("brlt", "blt");
+        intMAP.put("brleq", "ble");
+    }
 
     public BranchMIPSCommand(Register a, Register b, String label, String op) {
         this.a = a;
@@ -97,6 +107,7 @@ class BranchMIPSCommand extends MIPSCommand {
     }
 
 }
+
 
 class JumpMIPSCommand extends MIPSCommand {
     private String label;
