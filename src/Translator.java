@@ -550,8 +550,7 @@ public class Translator {
 
         commandList.add(new BranchMIPSCommand(a, b, command.getLabel(), command.getBranchCommand()));
 
-        // TODO: do we need this here?
-//        commandList.addAll(registerAllocator.exitCommand(command));
+        commandList.addAll(registerAllocator.exitCommand(command));
         return commandList;
     }
 

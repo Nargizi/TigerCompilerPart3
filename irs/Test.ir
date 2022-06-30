@@ -1,25 +1,47 @@
-start_program array_basic_ops
+start_program basic_break_stmt
     static-int-list:
     static-float-list:
 
 start_function main
     int main()
-    int-list: _2_a[3], _t1, _t2, _t3, _t4, _t5, _t6
+    int-list: _2_i, _2_a, _t1, _t2, _t3, _t4
     float-list:
     main:
-    array_store, _2_a, 0, 10
-    array_store, _2_a, 1, 20
-    array_load, _t1, _2_a, 0
-    array_load, _t2, _2_a, 1
-    add, _t1, _t2, _t3
-    array_store, _2_a, 2, _t3
-    array_load, _t4, _2_a, 0
-    call, printi, _t4
-    array_load, _t5, _2_a, 1
-    call, printi, _t5
-    array_load, _t6, _2_a, 2
-    call, printi, _t6
+    assign, _2_a, 4,
+    assign, _2_i, 1,
+    _L0:
+    brgt, _2_i, 10, _L1
+    call, printi, _2_i
+    assign, _t1, 1,
+    breq, _2_i, _2_a, _L3
+    assign, _t1, 0,
+    _L3:
+    breq, _t1, 0, _L2
+    goto, _L1, ,
+    _L2:
+    add, _2_i, 1, _2_i
+    goto, _L0, ,
+    _L1:
+    assign, _2_i, 10,
+    _L4:
+    assign, _t2, 1,
+    brgt, _2_i, 0, _L6
+    assign, _t2, 0,
+    _L6:
+    breq, _t2, 0, _L5
+    call, printi, _2_i
+    assign, _t3, 1,
+    breq, _2_i, _2_a, _L8
+    assign, _t3, 0,
+    _L8:
+    breq, _t3, 0, _L7
+    goto, _L5, ,
+    _L7:
+    sub, _2_i, 1, _t4
+    assign, _2_i, _t4,
+    goto, _L4, ,
+    _L5:
     return, 0, ,
 end_function main
 
-end_program array_basic_ops
+end_program basic_break_stmt
