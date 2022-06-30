@@ -52,6 +52,8 @@ public class InterferenceGraph {
         while (!pqueue.isEmpty()) {
             Node node = pqueue.poll();
             node.onStack = true;
+
+            UpdateNeighbourSpillCosts(node, pqueue);
             stack.push(node);
         }
 
@@ -72,6 +74,15 @@ public class InterferenceGraph {
         freeRegisters.removeAll(usedRegisters);
 
         node.register = freeRegisters.isEmpty() ? null : freeRegisters.iterator().next();
+    }
+
+    private void UpdateNeighbourSpillCosts(Node node, PriorityQueue<Node> pqueue) {
+        for (Node neighbour: node.interferences) {
+            if (!neighbour.onStack) {
+                pqueue.remove(neighbour);
+                pqueue.add(neighbour);
+            }
+        }
     }
 
     static public class Node {
