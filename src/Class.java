@@ -1,16 +1,15 @@
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Class {
     private final Map<String, Function> functions;
-    private final Stack staticMemory;
+    private final GlobalMemory staticMemory;
     private final String className;
 
     public Class(String name){
         this.className = name;
         this.functions = new HashMap<>();
-        this.staticMemory = new Stack(new Register("gp", Type.Integer));
+        this.staticMemory = new GlobalMemory();
     }
 
     public void addFunction(Function func){
@@ -22,8 +21,12 @@ public class Class {
         staticMemory.declareVariable(arg);
     }
 
-    public Address getAddress(Variable arg){
+    public DataAddress getAddress(Variable arg){
         return staticMemory.getAddress(arg);
+    }
+
+    public Map<Variable, Register> getAllGlobalAddress(){
+        return staticMemory.getAllAddress();
     }
 
     public Map<String, Function> getFunctions(){

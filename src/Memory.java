@@ -2,11 +2,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public interface Memory {
     boolean declareVariable(Variable var);
     Register getAddress(Variable var);
     Variable getVariable(String name);
+    Map<Variable, Register> getAllAddress();
 }
 
 class RegisterMemory implements Memory {
@@ -40,6 +42,11 @@ class RegisterMemory implements Memory {
         return varStored.get(name);
     }
 
+    @Override
+    public Map<Variable, Register> getAllAddress() {
+        return stored;
+    }
+
     public void deleteVariable(Variable var){
         Register register = stored.remove(var);
         varStored.remove(var.getName());
@@ -60,13 +67,15 @@ class Stack implements Memory {
     private final Register stackRegister;
     private final Map<Variable, Integer> stored;
     private final Map<String, Variable> varStored;
+    private boolean reversed;
     private Integer size;
 
-    public Stack(Register memoryRegister){
+    public Stack(Register memoryRegister, boolean reversed){
         this.stackRegister = memoryRegister;
         this.size = 0;
         this.stored = new HashMap<>();
         this.varStored = new HashMap<>();
+        this.reversed = reversed;
     }
 
     @Override
@@ -87,28 +96,86 @@ class Stack implements Memory {
         // instead of top of the stack, like in most programming languages (including java)
         // so here i am trying to mimic stack pointer behaviour by reversing object indices
         try {
-            return new Address(stackRegister, size - stored.get(var) - var.getSize());
+            return getAddress(stored.get(var), var.getSize());
         } catch (NullPointerException e){
             return null;
         }
+    }
+
+    private Address getAddress(Integer index, Integer varSize){
+        if(reversed)
+            return new Address(stackRegister, size - index - varSize);
+        return new Address(stackRegister, index);
+    }
+
+    public Integer getSize() {
+        return size;
     }
 
     @Override
     public Variable getVariable(String name) {
         return varStored.get(name);
     }
+
+    @Override
+    public Map<Variable, Register> getAllAddress() {
+        return stored
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                                          entry -> getAddress(entry.getValue(),
+                                                              entry.getKey().getSize())));
+    }
+}
+
+class GlobalMemory implements Memory{
+    private final Map<String, Variable> varStored;
+
+    GlobalMemory() {
+        this.varStored = new HashMap<>();
+    }
+
+    @Override
+    public boolean declareVariable(Variable var) {
+        varStored.put(var.getName(), var);
+        return true;
+    }
+
+    @Override
+    public DataAddress getAddress(Variable var) {
+        if(varStored.containsKey(var.getName()))
+            return new DataAddress(var.getName(), var.getType());
+        return null;
+    }
+
+    @Override
+    public Variable getVariable(String name) {
+        return varStored.get(name);
+    }
+
+    @Override
+    public Map<Variable, Register> getAllAddress() {
+        return varStored
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getValue,
+                                          entry -> new DataAddress(entry.getKey(),
+                                                                   entry.getValue().getType())));
+    }
 }
 
 class Address extends Register{
     private Integer offset;
+    private Register register;
 
     public Address(Register start, Integer offset) {
         super(start.getName(), start.getType());
         this.offset = offset;
+        this.register = start;
     }
 
     public Register getStart() {
-        return this;
+        return register;
     }
 
     public Integer getOffset() {
@@ -118,5 +185,17 @@ class Address extends Register{
     @Override
     public String toString() {
         return offset  + "(" + super.toString() + ")";
+    }
+}
+
+class DataAddress extends Register {
+
+    public DataAddress(String name, Type type){
+        super(name, type);
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

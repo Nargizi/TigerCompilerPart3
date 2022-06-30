@@ -9,12 +9,14 @@ public class Function {
 
     // memory for functions
     private final Stack localMemory;
+    private final Stack argumentMemory;
     private final RegisterMemory intArgumentMemory;
     private final RegisterMemory floatArgumentMemory;
 
     private final Map<IRCommand, Integer> commandMap;
     private List<IRCommand> commandList;
     private final BasicBlocks controlFlowGraph;
+    private int maxArgument;
 
 
     // predefined registers
@@ -29,9 +31,11 @@ public class Function {
     public Function(String name) {
         this.funcName = name;
         this.currClass = null;
+        this.maxArgument = 4;
 
         // memory initialization
-        this.localMemory = new Stack(new Register("sp", Type.Integer));
+        this.localMemory = new Stack(new Register("sp", Type.Integer), true);
+        this.argumentMemory = new Stack(new Register("fp", Type.Integer), false);
         this.intArgumentMemory = new RegisterMemory(intArgumentRegisters);
         this.floatArgumentMemory = new RegisterMemory(floatArgumentRegisters);
 
@@ -51,15 +55,16 @@ public class Function {
 
     public void addArgument(Variable v) {
         if (v.getType().equals(Type.Integer)){
-            if(!intArgumentMemory.declareVariable(v))
-                localMemory.declareVariable(v);
+            intArgumentMemory.declareVariable(v);
         } else {
-            if(!floatArgumentMemory.declareVariable(v))
-                localMemory.declareVariable(v);
+            floatArgumentMemory.declareVariable(v);
         }
+        argumentMemory.declareVariable(v);
     }
 
     public void addCommand(IRCommand c){
+        if (c instanceof CallCommand)
+            maxArgument = Math.max(maxArgument, ((CallCommand) c).getArgs().size());
         c.setBlock(controlFlowGraph.getCurrentBlock());
         commandList.add(c);
         commandMap.put(c, commandMap.size());
@@ -86,13 +91,33 @@ public class Function {
         return commandList.get(i);
     }
 
-    public Address getAddress(Variable arg){
-        Address add;
-        add = localMemory.getAddress(arg);
+    public int getMaxArgument() {
+        return maxArgument;
+    }
+
+    public int getLocalMemorySize() {
+        return localMemory.getSize();
+    }
+
+    public Address getLocalAddress(Variable arg){
+        Address add =localMemory.getAddress(arg);
+        if(add != null)
+            add = new Address(add.getStart(), add.getOffset() + getMaxArgument() * 4);
+
+        if(add == null)
+            arg = argumentMemory.getAddress(arg);
+        return add;
+    }
+
+    public DataAddress getGlobalAddress(Variable arg){
         // search for variable address in static memory
-        if(add == null && currClass != null){
-            add = currClass.getAddress(arg);
-        }
+        return currClass.getAddress(arg);
+    }
+
+    public Register getAddress(Variable arg){
+        Address add = getLocalAddress(arg);
+        if(add == null)
+            return getGlobalAddress(arg);
         return add;
     }
 
@@ -105,16 +130,11 @@ public class Function {
     public Argument getVariable(String name){
         Argument arg = localMemory.getVariable(name);
         if (arg == null)
-            arg = floatArgumentMemory.getVariable(name);
-        if (arg == null)
-            arg = intArgumentMemory.getVariable(name);
+            arg = argumentMemory.getVariable(name);
         if (arg == null)
             arg = currClass.getVariable(name);
         if (arg == null)
-            if (name.contains("."))
-                arg = new Constant(name, Type.Float);
-            else
-                arg = new Constant(name, Type.Integer);
+            arg = new Constant(name);
         return arg;
     }
 

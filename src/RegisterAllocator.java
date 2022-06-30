@@ -4,25 +4,23 @@ import java.util.stream.Collectors;
 
 public abstract class RegisterAllocator {
 
-    final static List<Register> intSavedRegisters = List.of("s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7")
+    public final static List<Register> intSavedRegisters = List.of("s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7")
             .stream().map(s -> new Register(s, Type.Integer)).collect(Collectors.toList());
 
-    final static List<Register> floatSavedRegisters = List.of("f20", "f22", "f24", "f26", "28", "f30")
+    public final static List<Register> floatSavedRegisters = List.of("f20", "f22", "f24", "f26", "f28", "f30")
             .stream().map(s -> new Register(s, Type.Float)).collect(Collectors.toList());
 
     protected RegisterMemory savedIntRegisterMemory;
     protected RegisterMemory savedFloatRegisterMemory;
     protected Function func;
 
-    public RegisterAllocator(Function func){
+    public RegisterAllocator(){
+    }
+
+    public void reset(Function func){
         this.savedIntRegisterMemory = new RegisterMemory(intSavedRegisters);
         this.savedFloatRegisterMemory = new RegisterMemory(floatSavedRegisters);
         this.func = func;
-    }
-
-    public void reset(){
-        this.savedIntRegisterMemory = new RegisterMemory(intSavedRegisters);
-        this.savedFloatRegisterMemory = new RegisterMemory(floatSavedRegisters);
     }
 
     public Function getFunc() {
@@ -33,12 +31,20 @@ public abstract class RegisterAllocator {
         this.func = func;
     }
 
-    public LoadMIPSCommand loadCommand(Register dest, Address origin, boolean isFloat){
+    public LoadMIPSCommand loadCommand(Register dest, Register origin, boolean isFloat){
         return new LoadMIPSCommand(dest, origin, isFloat);
     }
 
-    public StoreMIPSCommand storeCommand(Register origin, Address dest, boolean isFloat) {
+    public StoreMIPSCommand storeCommand(Register origin, Register dest, boolean isFloat) {
         return new StoreMIPSCommand(origin, dest, isFloat);
+    }
+
+    public List<Register> getUsedIntRegister(){
+        return savedIntRegisterMemory.getAllAddress().values().stream().toList();
+    }
+
+    public List<Register> getUsedFloatRegister(){
+        return savedFloatRegisterMemory.getAllAddress().values().stream().toList();
     }
 
     public Register load(Variable var){
@@ -48,10 +54,10 @@ public abstract class RegisterAllocator {
             else
                 return null;
         else
-        if(savedIntRegisterMemory.declareVariable(var))
-            return savedIntRegisterMemory.getAddress(var);
-        else
-            return null;
+            if(savedIntRegisterMemory.declareVariable(var))
+                return savedIntRegisterMemory.getAddress(var);
+            else
+                return null;
     }
 
     public void store(Variable var){
@@ -84,9 +90,6 @@ public abstract class RegisterAllocator {
 }
 
 class NaiveAllocator extends RegisterAllocator {
-    public NaiveAllocator(Function func) {
-        super(func);
-    }
 
     @Override
     public List<MIPSCommand> enterCommand(IRCommand command) {
@@ -105,6 +108,7 @@ class NaiveAllocator extends RegisterAllocator {
 
         return commandList;
     }
+
 
     @Override
     public List<MIPSCommand> exitCommand(IRCommand command) {
@@ -129,41 +133,38 @@ class CFGAllocator extends RegisterAllocator {
     Set<Variable> currStored;
     BasicBlocks.Block currBlock;
 
-    public CFGAllocator(Function func) {
-        super(func);
+    public CFGAllocator() {
         currStored = new HashSet<>();
         currBlock = null;
     }
 
-    //TODO: return load commands for each stored variable
     private List<MIPSCommand> enterBlock(BasicBlocks.Block block){
         List<MIPSCommand> commandList = new ArrayList<>();
         var usedVars = block.getUsedVars();
         while(!usedVars.isEmpty() && (savedFloatRegisterMemory.getNumFree() > 3 || savedIntRegisterMemory.getNumFree() > 3)){
             Variable curr = (Variable) usedVars.poll().getKey();
+            if (inRegister(curr)){
+                currStored.add(curr);
+                continue;
+            }
             if(curr.getType().equals(Type.Float) && savedFloatRegisterMemory.getNumFree() > 3) {
                 Register reg = load(curr);
                 currStored.add(curr);
-                //TODO: get load command for float
+                commandList.add(loadCommand(reg, func.getAddress(curr), true));
             }else if (curr.getType().equals(Type.Integer) && savedIntRegisterMemory.getNumFree() > 3){
                 Register reg = load(curr);
                 currStored.add(curr);
-                commandList.add(loadCommand(reg, func.getAddress(curr)));
+                commandList.add(loadCommand(reg, func.getAddress(curr), false));
             }
         }
         currBlock = block;
         return commandList;
     }
 
-    //TODO: return store commands for each freed variable
     private List<MIPSCommand> exitBlock(){
         List<MIPSCommand> commandList = new ArrayList<>();
         for(Variable var: currStored){
-            if(var.getType().equals(Type.Float)){
-                //TODO: get store command for float
-            }else{
-                commandList.add(storeCommand(getRegister(var), func.getAddress(var)));
-            }
+            commandList.add(storeCommand(getRegister(var), func.getAddress(var), var.getType().equals(Type.Float)));
             store(var);
         }
         currStored.clear();
@@ -176,9 +177,7 @@ class CFGAllocator extends RegisterAllocator {
         List<MIPSCommand> commandList = new ArrayList<>();
         BasicBlocks.Block block = command.getBlock();
         if (currBlock == null || !currBlock.equals(block)){
-            System.out.println("EXIT BLOCK");
             commandList.addAll(exitBlock());
-            System.out.println("ENTER BLOCK");
             commandList.addAll(enterBlock(block));
         }
 
@@ -194,7 +193,7 @@ class CFGAllocator extends RegisterAllocator {
 
         for(Variable var: used) {
             load(var);
-            commandList.add(loadCommand(getRegister(var), func.getAddress(var)));
+            commandList.add(loadCommand(getRegister(var), func.getAddress(var), var.getType().equals(Type.Float)));
         }
 
         return commandList;
@@ -203,11 +202,6 @@ class CFGAllocator extends RegisterAllocator {
     @Override
     public List<MIPSCommand> exitCommand(IRCommand command) {
         List<MIPSCommand> commandList = new ArrayList<>();
-        BasicBlocks.Block currBlock = command.getBlock();
-        if (currBlock.getCommands().get(currBlock.getCommands().size() - 1).equals(command)){
-            System.out.println("EXIT BLOCK");
-            commandList.addAll(exitBlock());
-        }
 
         Set<Variable> decl = new HashSet<>(command.getDecl());
         Set<Variable> used = new HashSet<>(command.getUsed());
@@ -216,7 +210,7 @@ class CFGAllocator extends RegisterAllocator {
         used.removeAll(currStored);
 
         for(Variable var: decl){
-            commandList.add(storeCommand(getRegister(var), func.getAddress(var)));
+            commandList.add(storeCommand(getRegister(var), func.getAddress(var), var.getType().equals(Type.Float)));
             store(var);
         }
 
@@ -224,6 +218,10 @@ class CFGAllocator extends RegisterAllocator {
             store(var);
         }
 
+        BasicBlocks.Block currBlock = command.getBlock();
+        if (currBlock.getCommands().get(currBlock.getCommands().size() - 1).equals(command)){
+            commandList.addAll(exitBlock());
+        }
         return commandList;
     }
 }
@@ -231,8 +229,7 @@ class CFGAllocator extends RegisterAllocator {
 class BriggsAllocator extends RegisterAllocator {
 
 
-    public BriggsAllocator(Function func) {
-        super(func);
+    public BriggsAllocator() {
     }
 
     @Override
