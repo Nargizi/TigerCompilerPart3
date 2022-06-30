@@ -368,6 +368,9 @@ public class Translator {
                 Variable bVariable = getTempVariable(b.getType());
                 bRegister = load(bVariable);
                 store(bVariable);
+                commandList.add(b.getType().equals(Type.Float) ?
+                                        new LoadFloatCommand(bRegister, (Constant) b) :
+                                        new LoadIntCommand(bRegister, (Constant) b));
             } else {
                 bRegister = registerAllocator.getRegister((Variable)b);
             }
@@ -548,6 +551,10 @@ public class Translator {
                 commandList.add(new SystemMIPSCommand());
             }
             case "printf" -> {
+                Argument arg = command.getArgs().get(0);
+                if(!arg.getType().equals(Type.Float)){
+                    commandList.add(new IntToFloatCommand(new Register("f12", Type.Float), new Register("a0", Type.Integer)));
+                }
                 commandList.add(new LoadIntCommand(RETURN_INT, new Constant("2")));
                 commandList.add(new SystemMIPSCommand());
                 commandList.add(new LoadIntCommand(RETURN_INT, new Constant("11")));
