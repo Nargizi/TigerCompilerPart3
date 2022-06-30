@@ -124,7 +124,7 @@ class ReturnMIPSCommand extends MIPSCommand {
 
     @Override
     public String toString() {
-        return "\t\t" +  "jr" + addr;
+        return "\t\t" +  "jr " + addr;
     }
 }
 

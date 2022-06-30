@@ -24,7 +24,7 @@ class RegisterMemory implements Memory {
 
     @Override
     public boolean declareVariable(Variable var){
-        Register register = freeRegisters.pop();
+        Register register = freeRegisters.poll();
         if (register == null)
             return false;
         stored.put(var, register);
@@ -49,6 +49,7 @@ class RegisterMemory implements Memory {
 
     public void deleteVariable(Variable var){
         Register register = stored.remove(var);
+        if(register == null) return;
         varStored.remove(var.getName());
         freeRegister(register);
     }

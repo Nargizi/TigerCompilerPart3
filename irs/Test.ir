@@ -1,15 +1,30 @@
-start_program basic_logical_relational_mixed
-    static-int-list: g_1, g_2[2]
-    static-float-list: gf_3, gf_4[5]
+start_program function_call_8_arg
+    static-int-list:
+    static-float-list:
+
+start_function sum
+    int sum(int _1_a, int _1_b, int _1_c, int _1_d, int _1_e, int _1_f, int _1_g, int _1_h)
+    int-list: _1_a, _1_b, _1_c, _1_d, _1_e, _1_f, _1_g, _1_h, _t1, _t2, _t3, _t4, _t5, _t6, _t7
+    float-list:
+    sum:
+    add, _1_a, _1_b, _t1
+    add, _t1, _1_c, _t2
+    add, _t2, _1_d, _t3
+    add, _t3, _1_e, _t4
+    add, _t4, _1_f, _t5
+    add, _t5, _1_g, _t6
+    add, _t6, _1_h, _t7
+    return, _t7, ,
+end_function sum
 
 start_function main
-    int main(int _t1, float _1_b)
-    int-list: _2_a[5], b
+    int main()
+    int-list: _3_result
     float-list:
     main:
-    assign, _t1, 2,
-    add, 2, _t1, b
+    callr, _3_result, sum, 1, 2, 3, 4, 5, 6, 7, 8
+    call, printi, _3_result
     return, 0, ,
 end_function main
 
-end_program basic_logical_relational_mixed
+end_program function_call_8_arg

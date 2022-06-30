@@ -154,6 +154,10 @@ class ReturnCommand extends IRCommand {
         return IRCommand.extractVars(set);
     }
 
+    public Argument getReturnValue() {
+        return returnValue;
+    }
+
     @Override
     public Set<Variable> getDecl() {
         return Set.of();
@@ -359,21 +363,17 @@ class CallCommand extends IRCommand {
 
 }
 
-class CallRCommand extends IRCommand {
+class CallRCommand extends CallCommand {
     private final Argument var;
-    private final List<Argument> args;
-    private final String func;
     private BasicBlocks.Block block;
 
     public CallRCommand(Argument var, String func, List<Argument> args) {
+        super(func, args);
         this.var = var;
-        this.func = func;
-        this.args = args;
     }
 
-    @Override
-    public Set<Variable> getUsed() {
-        return extractVars(new HashSet<>(args));
+    public Argument getVar() {
+        return var;
     }
 
     @Override
@@ -393,22 +393,26 @@ class CallRCommand extends IRCommand {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
         CallRCommand that = (CallRCommand) o;
-        return Objects.equals(var, that.var) && Objects.equals(func, that.func) && Objects.equals(block, that.block);
+        return Objects.equals(var, that.var) && Objects.equals(block, that.block);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(var, func, block);
+        return Objects.hash(super.hashCode(), var, block);
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("callr, ").append(var).append(", ").append(func);
-        for(Argument arg: args)
+        builder.append("callr, ").append(var).append(", ").append(getFunc());
+        for(Argument arg: getArgs())
             builder.append(", ").append(arg);
         return builder.toString();
     }

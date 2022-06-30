@@ -16,7 +16,7 @@ public class Function {
     private final Map<IRCommand, Integer> commandMap;
     private List<IRCommand> commandList;
     private final BasicBlocks controlFlowGraph;
-    private int maxArgument;
+    private int maxArgumentSize;
 
 
     // predefined registers
@@ -31,7 +31,7 @@ public class Function {
     public Function(String name) {
         this.funcName = name;
         this.currClass = null;
-        this.maxArgument = 4;
+        this.maxArgumentSize = 4 * 4 + 2 * 8; // 4 int argument register + 2 float argument register
 
         // memory initialization
         this.localMemory = new Stack(new Register("sp", Type.Integer), true);
@@ -63,8 +63,19 @@ public class Function {
     }
 
     public void addCommand(IRCommand c){
-        if (c instanceof CallCommand)
-            maxArgument = Math.max(maxArgument, ((CallCommand) c).getArgs().size());
+        if (c instanceof CallCommand){
+            int size = 0;
+            for(var arg: ((CallCommand) c).getArgs()){
+                size += arg.getType().getSize();
+            }
+            maxArgumentSize = Math.max(maxArgumentSize, size);
+        } else if (c instanceof CallRCommand){
+            int size = 0;
+            for(var arg: ((CallRCommand) c).getArgs()){
+                size += arg.getType().getSize();
+            }
+            maxArgumentSize = Math.max(maxArgumentSize, size);
+        }
         c.setBlock(controlFlowGraph.getCurrentBlock());
         commandList.add(c);
         commandMap.put(c, commandMap.size());
@@ -91,8 +102,8 @@ public class Function {
         return commandList.get(i);
     }
 
-    public int getMaxArgument() {
-        return maxArgument;
+    public int getMaxArgumentSize() {
+        return maxArgumentSize;
     }
 
     public int getLocalMemorySize() {
@@ -102,7 +113,7 @@ public class Function {
     public Address getLocalAddress(Variable arg){
         Address add =localMemory.getAddress(arg);
         if(add != null)
-            add = new Address(add.getStart(), add.getOffset() + getMaxArgument() * 4);
+            add = new Address(add.getStart(), add.getOffset() + getMaxArgumentSize());
 
         if(add == null)
             arg = argumentMemory.getAddress(arg);
@@ -168,6 +179,4 @@ public class Function {
 
         return Set.of(commandMap.get(curr) + 1);
     }
-
-
 }
