@@ -67,7 +67,10 @@ public class Translator {
             if(add.getKey() instanceof Array)
                 commandList.add(new DataTypeMIPSCommand(add.getValue().getName(), "space", String.valueOf(add.getKey().getSize())));
             else
-                commandList.add(new DataTypeMIPSCommand(add.getValue().getName(), add.getKey().getType().equals(Type.Float) ? "float": "word"));
+                if(add.getValue().getType().equals(Type.Float))
+                    commandList.add(new DataTypeMIPSCommand(add.getValue().getName(), "float", "0.0"));
+                else
+                    commandList.add(new DataTypeMIPSCommand(add.getValue().getName(),  "word", "0"));
         }
         commandList.add(new AssemblerDirectiveCommand("text"));
         commandList.add(new AssemblerDirectiveCommand("globl", List.of("main")));
@@ -135,8 +138,6 @@ public class Translator {
         int frameRegister = 4;
         int stackSize = argStorage + savedRegister + returnAddress + f.getLocalMemorySize() + frameRegister;
 
-        Variable temp = getTempVariable(Type.Integer);
-        Register tempReg = load(temp);
 
         commandList.add(new LoadMIPSCommand(RA, new Address(SP, stackSize - returnAddress), false));
         commandList.add(new LoadMIPSCommand(FP, new Address(SP, stackSize - returnAddress - frameRegister), false));
@@ -156,7 +157,6 @@ public class Translator {
 
         commandList.add(new BinaryImmediateMIPSCommand(SP, SP, new Constant(String.valueOf(stackSize)), BinaryOperator.ADD));
         commandList.add(new ReturnMIPSCommand(RA));
-        store(temp);
 
         return commandList;
     }
@@ -511,7 +511,7 @@ public class Translator {
         List<MIPSCommand> commandList = new LinkedList<>(registerAllocator.enterCommand(command));
         int offset = 0, numInt = 0, numFloat = 0;
         for(int i = 0; i < command.getArgs().size(); ++i){
-            Variable  arg = null;
+            Variable  arg;
             Register r;
             if (command.getArgs().get(i) instanceof Constant constant){
                 arg = getTempVariable(constant.getType());
@@ -529,27 +529,31 @@ public class Translator {
             commandList.add(new StoreMIPSCommand(r, new Address(SP, offset), arg.getType().equals(Type.Float)));
 
             if(arg.getType().equals(Type.Float) && numFloat < 2){
-                commandList.add(new MoveMIPSCommand(new Register("f" + String.valueOf((2 * numFloat++) + 12),  Type.Float), r, true));
+                commandList.add(new MoveMIPSCommand(new Register("f" + ((2 * numFloat++) + 12), Type.Float), r, true));
             } else if(arg.getType().equals(Type.Integer) && numInt < 4){
                 commandList.add(new MoveMIPSCommand(new Register("a" + numInt++,  Type.Integer), r, false));
             }
             offset += arg.getSize();
             store(arg);
         }
-        if(command.getFunc().equals("printi")){
-            commandList.add(new LoadIntCommand(RETURN_INT, new Constant("1")));
-            commandList.add(new SystemMIPSCommand());
-        } else if (command.getFunc().equals("printf")){
-            commandList.add(new LoadIntCommand(RETURN_INT, new Constant("2")));
-            commandList.add(new SystemMIPSCommand());
-        } else if (command.getFunc().equals("exit")) {
-            commandList.add(new LoadIntCommand(RETURN_INT, new Constant("17")));
-            commandList.add(new SystemMIPSCommand());
-        } else if (command.getFunc().equals("not")) {
-            Register arg = new Register("a0", Type.Integer);
-            commandList.add(new BinaryMIPSCommand(RETURN_INT, arg, arg, BinaryOperator.NOR, false));
-        } else{
-            commandList.add(new CallMIPSCommand(command.getFunc()));
+        switch (command.getFunc()) {
+            case "printi" -> {
+                commandList.add(new LoadIntCommand(RETURN_INT, new Constant("1")));
+                commandList.add(new SystemMIPSCommand());
+            }
+            case "printf" -> {
+                commandList.add(new LoadIntCommand(RETURN_INT, new Constant("2")));
+                commandList.add(new SystemMIPSCommand());
+            }
+            case "exit" -> {
+                commandList.add(new LoadIntCommand(RETURN_INT, new Constant("17")));
+                commandList.add(new SystemMIPSCommand());
+            }
+            case "not" -> {
+                Register arg = new Register("a0", Type.Integer);
+                commandList.add(new BinaryMIPSCommand(RETURN_INT, arg, arg, BinaryOperator.NOR, false));
+            }
+            default -> commandList.add(new CallMIPSCommand(command.getFunc()));
         }
         return commandList;
     }
@@ -603,7 +607,22 @@ public class Translator {
         }
         if (aTempVar != null) store(aTempVar);
 
-        commandList.add(new BranchMIPSCommand(a, b, command.getLabel(), command.getBranchCommand()));
+        if(!a.getType().equals(b.getType())){
+            Variable tempVar = getTempVariable(Type.Float);
+            Register tempReg = load(tempVar);
+            if(!a.getType().equals(Type.Float)){
+                commandList.add(new IntToFloatCommand(tempReg, a));
+                a = tempReg;
+            } else {
+                commandList.add(new IntToFloatCommand(tempReg, b));
+                b = tempReg;
+            }
+            store(tempVar);
+        }
+        if(a.getType().equals(Type.Float))
+            commandList.add(new FloatBranchMIPSCommand(a, b, command.getLabel(), command.getBranchCommand()));
+        else
+            commandList.add(new BranchMIPSCommand(a, b, command.getLabel(), command.getBranchCommand()));
 
         commandList.addAll(registerAllocator.exitCommand(command));
         return commandList;
